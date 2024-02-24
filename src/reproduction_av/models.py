@@ -27,6 +27,7 @@ class OutputExtractor(L.LightningModule):
 
     def forward(self, batch):
         x, _ = batch
+        print('x loaded')
         z_emb = self.backbone(x)  # extract the embdeddings using the backbone model
         return z_emb
 

@@ -25,8 +25,6 @@ from torchvision.transforms import (
     ToPILImage,
 )
 from pl_bolts.models.self_supervised import Moco_v2
-
-# from fillm.run.model import * Commented out by Andreas
 import torch.nn.functional as F
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.metrics import r2_score
@@ -35,6 +33,9 @@ import warnings
 import seaborn as sns
 import torch.optim.lr_scheduler as lr_scheduler
 import matplotlib.pyplot as plt
+
+from models import OutputExtractor
+from torch.utils.data import Subset
 
 
 sns.set_style("ticks")
@@ -46,12 +47,18 @@ dataset.set_format(type="torch", columns=["image", "spectrum"])
 
 # Create the dataloaders
 train_dataloader = torch.utils.data.DataLoader(
-    dataset["train"], batch_size=512, shuffle=True, num_workers=10
+    dataset["train"], batch_size=10, shuffle=True, num_workers=2
 )
 val_dataloader = torch.utils.data.DataLoader(
-    dataset["test"], batch_size=512, shuffle=False, num_workers=10
+    dataset["test"], batch_size=10, shuffle=False, num_workers=2
 )
 
+# %% testing the dataloader - DOES NOT WORK
+# # Fetch a single batch of images
+# images, _ = (iter(train_dataloader))
+# print("images loaded")
+
+# %%
 # Define Transforms to be used during training
 image_transforms = Compose(
     [
@@ -66,7 +73,7 @@ image_transforms = Compose(
 data = train_dataloader.dataset.data
 shape = train_dataloader.dataset.data.shape
 # %% Visualise some examples
-index = 4
+index = 1
 
 raw_image_ex = image_transforms(dataset["train"][index]["image"].T).T
 rgb_image_ex = dr2_rgb(raw_image_ex.T, bands=["g", "r", "z"])
@@ -81,4 +88,13 @@ ax[2].plot(spectrum_ex)
 ax[2].set_title("Spectrum")
 
 plt.show()
-# %%
+# %% Load image embdedder
+
+checkpoint_path = "../../data/weights/resnet50.ckpt"
+moco_model = Moco_v2.load_from_checkpoint(checkpoint_path=checkpoint_path)
+# extract the backbone model
+backbone = moco_model.encoder_q
+img_model = OutputExtractor(backbone).to("cuda")
+
+num_params = np.sum(np.fromiter((p.numel() for p in img_model.parameters()), int))
+print(f"Number of parameters in image model: {num_params:,}")
