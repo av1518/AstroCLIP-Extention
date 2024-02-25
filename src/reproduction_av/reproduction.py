@@ -47,16 +47,32 @@ dataset.set_format(type="torch", columns=["image", "spectrum"])
 
 # Create the dataloaders
 train_dataloader = torch.utils.data.DataLoader(
-    dataset["train"], batch_size=10, shuffle=True, num_workers=2
+    dataset["train"], batch_size=10, shuffle=True, num_workers=0
 )
 val_dataloader = torch.utils.data.DataLoader(
-    dataset["test"], batch_size=10, shuffle=False, num_workers=2
+    dataset["test"], batch_size=10, shuffle=False, num_workers=0
 )
 
 # %% testing the dataloader - DOES NOT WORK
-# # Fetch a single batch of images
-# images, _ = (iter(train_dataloader))
-# print("images loaded")
+# Fetch a single batch of images
+batch = next(iter(train_dataloader))
+print("images loaded")
+print(type(batch))
+print(len(batch))
+# %%
+## Fetch a few batches from the DataLoader
+for i, batch in enumerate(train_dataloader):
+    # Access the 'spectrum' part of the batch
+    spectra = batch["spectrum"]
+
+    # Iterate over each spectrum in the batch
+    for j, spectrum in enumerate(spectra):
+        print(f"Batch {i}, Spectrum {j}: Shape = {spectrum.shape}")
+
+    # Optional: Break the loop after a few batches to avoid too much output
+    if i == 2:
+        break
+
 
 # %%
 # Define Transforms to be used during training
@@ -98,3 +114,34 @@ img_model = OutputExtractor(backbone).to("cuda")
 
 num_params = np.sum(np.fromiter((p.numel() for p in img_model.parameters()), int))
 print(f"Number of parameters in image model: {num_params:,}")
+
+# %% Loading spectrum model
+import torch.hub
+
+github = "pmelchior/spender"
+
+# get the spender code and show list of pretrained models
+print(torch.hub.list(github))
+
+
+# print out details for SDSS model from paper II
+print(torch.hub.help(github, "desi_edr_galaxy"))
+
+# # load instrument and spectrum model from the hub
+sdss, model = torch.hub.load(github, "desi_edr_galaxy")
+
+# %%
+# Fetch a single batch of images
+batch = next(iter(train_dataloader))
+print("images loaded")
+print(type(batch))
+print(len(batch))
+
+batch = next(iter(train_dataloader))
+spectra = batch["spectrum"]
+spectra = spectra.squeeze(-1)  # This removes the last dimension if it's of size 1
+
+# Now pass it to the model
+s = model.encode(spectra)
+print(s)
+# %%
