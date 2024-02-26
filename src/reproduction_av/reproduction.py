@@ -129,6 +129,7 @@ print(torch.hub.help(github, "desi_edr_galaxy"))
 
 # # load instrument and spectrum model from the hub
 sdss, model = torch.hub.load(github, "desi_edr_galaxy")
+print(model)
 
 # %%
 # Fetch a single batch of images
@@ -144,4 +145,17 @@ spectra = spectra.squeeze(-1)  # This removes the last dimension if it's of size
 # Now pass it to the model
 s = model.encode(spectra)
 print(s)
-# %%
+# %% Modify the model : Freeze all layers except the last one
+# Step 1: Modify the Final MLP Layer
+# Get the number of in_features from the last Linear layer
+in_features = model.encoder.mlp[9].in_features
+
+# Replace the last Linear layer with a new one having out_features=128
+model.encoder.mlp[9] = torch.nn.Linear(in_features, 128)
+print(model.encoder)
+
+# Step 2: Freeze Other Layers
+# Freeze all layers in the encoder except for the last MLP layer
+for name, param in model.encoder.named_parameters():
+    if "mlp.9" not in name:  # Check if the parameter is not part of the last MLP layer
+        param.requires_grad = False
