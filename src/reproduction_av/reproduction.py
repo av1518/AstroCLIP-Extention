@@ -115,6 +115,11 @@ img_model = OutputExtractor(backbone).to("cuda")
 num_params = np.sum(np.fromiter((p.numel() for p in img_model.parameters()), int))
 print(f"Number of parameters in image model: {num_params:,}")
 
+fc = img_model.backbone.fc
+print(fc)
+# print number of parameters in the last fully connected layer
+num_params = np.sum(np.fromiter((p.numel() for p in fc.parameters()), int))
+
 # %% Loading spectrum model
 import torch.hub
 
@@ -159,3 +164,20 @@ print(model.encoder)
 for name, param in model.encoder.named_parameters():
     if "mlp.9" not in name:  # Check if the parameter is not part of the last MLP layer
         param.requires_grad = False
+
+# %%
+mlp = model.encoder.mlp
+
+total_mlp_parameters = 0
+for i, layer in enumerate(mlp):
+    if isinstance(layer, torch.nn.Linear):
+        # Calculate the number of parameters in a linear layer
+        num_parameters = layer.in_features * layer.out_features
+        if layer.bias is not None:
+            num_parameters += layer.out_features  # Add bias parameters if present
+        print(f"Layer {i} - Linear: {num_parameters} parameters")
+        total_mlp_parameters += num_parameters
+
+print(f"Total parameters in the MLP: {total_mlp_parameters:,}")
+
+# %%

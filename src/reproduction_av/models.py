@@ -27,9 +27,38 @@ class OutputExtractor(L.LightningModule):
 
     def forward(self, batch):
         x, _ = batch
-        print('x loaded')
+        print("x loaded")
         z_emb = self.backbone(x)  # extract the embdeddings using the backbone model
         return z_emb
 
     def predict(self, batch, batch_idx: int, dataloader_idx: int = None):
         return self(batch)
+
+
+class AstroCLIP(L.LightningModule):
+    def __init__(self, image_encoder, spectrum_encoder):
+        super().__init__()
+        self.image_encoder = image_encoder
+        self.spectrum_encoder = spectrum_encoder
+
+        # freeze all layers in image encoder except for the last MLP layer
+        for name, param in self.image_encoder.named_parameters():
+            if "fc" not in name:
+                param.requires_grad = False
+
+        # freeze all layers in spectrum encoder except for the last MLP layer
+        for name, param in self.spectrum_encoder.named_parameters():
+            if "mlp.9" not in name:
+                param.requires_grad = False
+
+        # define the final MLP layer
+        in_features = self.image_encoder.backbone.fc.in_features
+        self.image_encoder.backbone.fc = nn.Linear(in_features, 128)
+        in_features = self.spectrum_encoder.encoder.mlp[9].in_features
+        self.spectrum_encoder.encoder.mlp[9] = nn.Linear(in_features, 128)
+
+    def forward(self, x, image=True):
+        if image:
+            return self.image_encoder(x)
+        else:
+            return self.spectrum_encoder(x)
