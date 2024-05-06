@@ -62,3 +62,31 @@ class AstroCLIP(L.LightningModule):
             return self.image_encoder(x)
         else:
             return self.spectrum_encoder(x)
+
+
+class ExtendedMLP(nn.Module):
+    def __init__(self, dropout=0.1):
+        super(ExtendedMLP, self).__init__()
+        self.additional_layers = nn.Sequential(
+            nn.Linear(6, 128),  # 1st layer
+            nn.PReLU(num_parameters=128),
+            nn.Dropout(dropout),
+            nn.Linear(128, 128),  # 2nd layer
+            nn.PReLU(num_parameters=128),
+            nn.Dropout(dropout),
+            nn.Linear(128, 128),  # 3rd layer
+            nn.PReLU(num_parameters=128),
+            nn.Dropout(dropout),
+            nn.Linear(128, 128),  # 4th layer
+            nn.PReLU(num_parameters=128),
+            nn.Dropout(dropout),
+            nn.Linear(128, 128),  # 5th layer
+            nn.PReLU(num_parameters=128),
+            nn.Dropout(dropout),
+            nn.Linear(128, 128),  # 6th layer
+            nn.PReLU(num_parameters=128),
+            nn.Dropout(dropout),
+        )
+
+    def forward(self, x):
+        return self.additional_layers(x)

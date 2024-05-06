@@ -35,30 +35,51 @@ import torch.optim.lr_scheduler as lr_scheduler
 import matplotlib.pyplot as plt
 
 from models import OutputExtractor
-from torch.utils.data import Subset
+from torch.utils.data import Subset, DataLoader
 
 
 sns.set_style("ticks")
 sns.set_context("paper", font_scale=1.5, rc={"lines.linewidth": 2})
-# %% Datasets
+# %% Get datasets
 CACHE_DIR = "C:\datasets_astroclip"
 dataset = load_dataset("datasets_files/legacy_survey.py", cache_dir=CACHE_DIR)
 dataset.set_format(type="torch", columns=["image", "spectrum"])
 
+# %%
 # Create the dataloaders
-train_dataloader = torch.utils.data.DataLoader(
+train_dataloader = DataLoader(
     dataset["train"], batch_size=10, shuffle=True, num_workers=0
 )
-val_dataloader = torch.utils.data.DataLoader(
+val_dataloader = DataLoader(
     dataset["test"], batch_size=10, shuffle=False, num_workers=0
 )
-
+# %% make sure this works
+for x in train_dataloader:
+    print(type(x))
+    break
 # %% testing the dataloader - DOES NOT WORK
 # Fetch a single batch of images
 batch = next(iter(train_dataloader))
 print("images loaded")
 print(type(batch))
-print(len(batch))
+print(len(batch))  # 2 because it has two keys: image and spectrum
+print(len(batch["image"]))  # 10 because the batch size is 10
+# Load the image of the first batch
+test_image = batch["image"][0]
+print(test_image.shape)
+
+# plot the image
+plt.imshow(test_image)
+plt.show()
+
+# Load the spectrum of the first batch
+test_spectrum = batch["spectrum"][0]
+print(test_spectrum.shape)
+
+# plot the spectrum
+plt.plot(test_spectrum)
+plt.show()
+
 # %%
 ## Fetch a few batches from the DataLoader
 for i, batch in enumerate(train_dataloader):
@@ -105,7 +126,6 @@ ax[2].set_title("Spectrum")
 
 plt.show()
 # %% Load image embdedder
-
 checkpoint_path = "../../data/weights/resnet50.ckpt"
 moco_model = Moco_v2.load_from_checkpoint(checkpoint_path=checkpoint_path)
 # extract the backbone model
@@ -116,68 +136,64 @@ num_params = np.sum(np.fromiter((p.numel() for p in img_model.parameters()), int
 print(f"Number of parameters in image model: {num_params:,}")
 
 fc = img_model.backbone.fc
-print(fc)
+print("Final Layer structure:", fc)
 # print number of parameters in the last fully connected layer
-num_params = np.sum(np.fromiter((p.numel() for p in fc.parameters()), int))
+fc_num_params = np.sum(np.fromiter((p.numel() for p in fc.parameters()), int))
+print(
+    f"Number of params in final layer of image embedder (to be trained in CLIP): {fc_num_params:,}"
+)
 
-# %% Loading spectrum model
+# %% Load spectrum model
 import torch.hub
 
 github = "pmelchior/spender"
-
 # get the spender code and show list of pretrained models
 print(torch.hub.list(github))
-
 
 # print out details for SDSS model from paper II
 print(torch.hub.help(github, "desi_edr_galaxy"))
 
 # # load instrument and spectrum model from the hub
-sdss, model = torch.hub.load(github, "desi_edr_galaxy")
-print(model)
+sdss, spec_model = torch.hub.load(github, "desi_edr_galaxy")
+# print(spec_model)
+
+# # move the model to the GPU
+# spec_model = spec_model.to("cuda")
 
 # %%
-# Fetch a single batch of images
-batch = next(iter(train_dataloader))
-print("images loaded")
-print(type(batch))
-print(len(batch))
-
 batch = next(iter(train_dataloader))
 spectra = batch["spectrum"]
 spectra = spectra.squeeze(-1)  # This removes the last dimension if it's of size 1
 
+# %%
+spec_encoder = spec_model.encoder
+print(spec_encoder)
 # Now pass it to the model
-s = model.encode(spectra)
+s = spec_encoder(spectra)
 print(s)
-# %% Modify the model : Freeze all layers except the last one
-# Step 1: Modify the Final MLP Layer
-# Get the number of in_features from the last Linear layer
-in_features = model.encoder.mlp[9].in_features
+# %%
+from models import ExtendedMLP
 
-# Replace the last Linear layer with a new one having out_features=128
-model.encoder.mlp[9] = torch.nn.Linear(in_features, 128)
-print(model.encoder)
+spec_encoder.extended_mlp = ExtendedMLP()
+spec_encoder
 
-# Step 2: Freeze Other Layers
+# %% Freeze all layers except the last one
 # Freeze all layers in the encoder except for the last MLP layer
-for name, param in model.encoder.named_parameters():
-    if "mlp.9" not in name:  # Check if the parameter is not part of the last MLP layer
+for name, param in spec_encoder.named_parameters():
+    if "extended_mlp" not in name:
         param.requires_grad = False
 
-# %%
-mlp = model.encoder.mlp
 
-total_mlp_parameters = 0
-for i, layer in enumerate(mlp):
-    if isinstance(layer, torch.nn.Linear):
-        # Calculate the number of parameters in a linear layer
-        num_parameters = layer.in_features * layer.out_features
-        if layer.bias is not None:
-            num_parameters += layer.out_features  # Add bias parameters if present
-        print(f"Layer {i} - Linear: {num_parameters} parameters")
-        total_mlp_parameters += num_parameters
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
-print(f"Total parameters in the MLP: {total_mlp_parameters:,}")
+
+num_params = count_parameters(spec_encoder)
+print(f"Number of trainable parameters in extended_mlp: {num_params}")
+
+# for i, (name, param) in enumerate(spec_encoder.extended_mlp.named_parameters()):
+#     if param.requires_grad:
+#         print(f"{i}: {name} - {param.numel()} parameters; requires_grad={param.requires_grad}")
+
 
 # %%
