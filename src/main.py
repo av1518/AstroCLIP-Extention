@@ -2,7 +2,7 @@
 from sklearn.decomposition import PCA
 from scipy.ndimage import gaussian_filter1d
 from sklearn.metrics.pairwise import cosine_similarity
-from tutorial_helpers import (
+from src.tutorial_helpers import (
     load_model_from_ckpt,
     forward,
     slice,
@@ -34,7 +34,7 @@ import seaborn as sns
 import torch.optim.lr_scheduler as lr_scheduler
 import matplotlib.pyplot as plt
 
-from models import OutputExtractor
+from src.models import OutputExtractor, ExtendedSpender
 from torch.utils.data import Subset, DataLoader
 
 
@@ -42,7 +42,7 @@ sns.set_style("ticks")
 sns.set_context("paper", font_scale=1.5, rc={"lines.linewidth": 2})
 # %% Get datasets
 CACHE_DIR = "C:\datasets_astroclip"
-dataset = load_dataset("datasets_files/legacy_survey.py", cache_dir=CACHE_DIR)
+dataset = load_dataset("src/datasets_files/legacy_survey.py", cache_dir=CACHE_DIR)
 dataset.set_format(type="torch", columns=["image", "spectrum"])
 
 # %%
@@ -126,7 +126,7 @@ ax[2].set_title("Spectrum")
 
 plt.show()
 # %% Load image embdedder
-checkpoint_path = "../../data/weights/resnet50.ckpt"
+checkpoint_path = "data/weights/resnet50.ckpt"
 moco_model = Moco_v2.load_from_checkpoint(checkpoint_path=checkpoint_path)
 # extract the backbone model
 backbone = moco_model.encoder_q
@@ -142,6 +142,12 @@ fc_num_params = np.sum(np.fromiter((p.numel() for p in fc.parameters()), int))
 print(
     f"Number of params in final layer of image embedder (to be trained in CLIP): {fc_num_params:,}"
 )
+
+# Freeze all but the last layers of the image encoder
+for name, child in img_model.backbone.named_children():
+    if name != "fc":
+        for param in child.parameters():
+            param.requires_grad = False
 
 # %% Load spectrum model
 import torch.hub
@@ -172,7 +178,7 @@ print(spec_encoder)
 s = spec_encoder(spectra)
 print(s)
 # %%
-from models import ExtendedMLP
+from src.models import ExtendedMLP
 
 spec_encoder.extended_mlp = ExtendedMLP()
 spec_encoder
@@ -195,5 +201,23 @@ print(f"Number of trainable parameters in extended_mlp: {num_params}")
 #     if param.requires_grad:
 #         print(f"{i}: {name} - {param.numel()} parameters; requires_grad={param.requires_grad}")
 
+
+# %%
+random_batch = next(iter(train_dataloader))
+random_spectrum = random_batch["spectrum"].squeeze(-1)
+
+random_spectrum.shape
+
+spec_encoder.eval()
+output = spec_encoder(random_spectrum)
+print(output.shape)
+
+# %% Load ExtendedSpender
+extended_encoder = ExtendedSpender()
+
+# %%
+# pass the random spectrum to the model
+output = extended_encoder(random_spectrum)
+print(output.shape)
 
 # %%

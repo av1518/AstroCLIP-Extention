@@ -90,3 +90,20 @@ class ExtendedMLP(nn.Module):
 
     def forward(self, x):
         return self.additional_layers(x)
+
+
+class ExtendedSpender(nn.Module):
+    def __init__(self, dropout=0.1):
+        super(ExtendedSpender, self).__init__()
+        ssds, spec_model = torch.hub.load("pmelchior/spender", "desi_edr_galaxy")
+        self.spec_encoder = spec_model.encoder
+        self.extended_mlp = ExtendedMLP(dropout=dropout)
+
+        # Freeze all layers except the last one
+        for name, param in self.spec_encoder.named_parameters():
+            param.requires_grad = False
+
+    def forward(self, x):
+        x = self.spec_encoder(x)  # Get the encoding from the original model
+        x = self.extended_mlp(x)  # Pass it through the extended MLP
+        return x
