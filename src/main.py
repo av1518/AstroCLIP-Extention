@@ -155,7 +155,7 @@ img_model.eval()
 batch = next(iter(train_dataloader))
 im, sp = batch["image"].transpose(1, 3).to("cuda"), batch["spectrum"].squeeze()
 # %%
-im_embedding = img_model((im, None))
+im_embedding = img_model((im, None)).to("cpu")
 print(im_embedding.shape)
 
 
@@ -227,7 +227,13 @@ extended_encoder = ExtendedSpender()
 
 # %%
 # pass the random spectrum to the model
-output = extended_encoder(random_spectrum)
-print(output.shape)
+sp_embeddings = extended_encoder(random_spectrum).to("cpu")
+print(sp_embeddings.shape)
+
+# %%
+from src.loss import CLIPLoss
+
+clip = CLIPLoss()
+logits, logits_t = clip.get_cosine_matrix(im_embedding, sp_embeddings)
 
 # %%
