@@ -64,10 +64,14 @@ image_transforms = Compose(
     ]
 )
 
-# %% Load image embdedder
+# %% Load image and spectrum models
 checkpoint_path = "data/weights/resnet50.ckpt"
 moco_model = Moco_v2.load_from_checkpoint(checkpoint_path=checkpoint_path)
 # extract the backbone model
 backbone = moco_model.encoder_q
+img_encoder = OutputExtractor(backbone)
+
 # %% Load ExtendedSpender
-extended_encoder = ExtendedSpender()
+spectrum_encoder = ExtendedSpender()
+
+# %%

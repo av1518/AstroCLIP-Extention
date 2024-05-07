@@ -149,6 +149,16 @@ for name, child in img_model.backbone.named_children():
         for param in child.parameters():
             param.requires_grad = False
 
+# %% Test the image model
+# pass the random image to the model
+img_model.eval()
+batch = next(iter(train_dataloader))
+im, sp = batch["image"].transpose(1, 3).to("cuda"), batch["spectrum"].squeeze()
+# %%
+im_embedding = img_model((im, None))
+print(im_embedding.shape)
+
+
 # %% Load spectrum model
 import torch.hub
 
