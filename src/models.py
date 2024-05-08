@@ -3,6 +3,9 @@ import torch, torch.nn as nn, torch.nn.functional as F
 
 # from fillm.run.model import * Commented out by Andreas
 import torch.nn.functional as F
+from src.loss import CLIPLoss
+import numpy as np
+from torch.optim import lr_scheduler
 
 
 class OutputExtractor(L.LightningModule):
@@ -33,35 +36,6 @@ class OutputExtractor(L.LightningModule):
 
     def predict(self, batch, batch_idx: int, dataloader_idx: int = None):
         return self(batch)
-
-
-class AstroCLIP(L.LightningModule):
-    def __init__(self, image_encoder, spectrum_encoder):
-        super().__init__()
-        self.image_encoder = image_encoder
-        self.spectrum_encoder = spectrum_encoder
-
-        # freeze all layers in image encoder except for the last MLP layer
-        for name, param in self.image_encoder.named_parameters():
-            if "fc" not in name:
-                param.requires_grad = False
-
-        # freeze all layers in spectrum encoder except for the last MLP layer
-        for name, param in self.spectrum_encoder.named_parameters():
-            if "mlp.9" not in name:
-                param.requires_grad = False
-
-        # define the final MLP layer
-        in_features = self.image_encoder.backbone.fc.in_features
-        self.image_encoder.backbone.fc = nn.Linear(in_features, 128)
-        in_features = self.spectrum_encoder.encoder.mlp[9].in_features
-        self.spectrum_encoder.encoder.mlp[9] = nn.Linear(in_features, 128)
-
-    def forward(self, x, image=True):
-        if image:
-            return self.image_encoder(x)
-        else:
-            return self.spectrum_encoder(x)
 
 
 class ExtendedMLP(nn.Module):
@@ -107,3 +81,69 @@ class ExtendedSpender(nn.Module):
         x = self.spec_encoder(x)  # Get the encoding from the original model
         x = self.extended_mlp(x)  # Pass it through the extended MLP
         return x
+
+
+class AstroCLIP(L.LightningModule):
+    """
+    A class that loads the pretrained models, freezes all the layers except the last one in image encoder and is then trained using
+    CLIP loss
+    """
+
+    def __init__(self, image_encoder, spectrum_encoder, image_transforms):
+        super().__init__()
+
+        self.image_transforms = image_transforms
+        self.image_encoder = image_encoder
+
+        # Freeze all layers except the last one
+        for name, child in self.image_encoder.backbone.named_children():
+            if name != "fc":
+                for param in child.parameters():
+                    param.requires_grad = False
+
+        self.spectrum_encoder = spectrum_encoder
+
+        self.temperature = nn.Parameter(torch.tensor(np.log(15.5)))  # fixed temperature
+        self.loss = CLIPLoss()
+
+    def forward(self, x, image=True):
+        if image:
+            return self.image_encoder((x, None))
+        else:
+            return self.spectrum_encoder(x)
+
+    def training_step(self, batch):
+        im = batch["image"].transpose(1, 3)
+        im = self.image_transforms(im)
+
+        spec = batch["spectrum"].squeeze(-1)
+        im_emb = self.image_encoder((im, None))
+        sp_emb = self.spectrum_encoder(spec)
+
+        loss = self.loss(im_emb, sp_emb, self.temperature)
+        self.log("train_loss", loss)
+        self.log("temperature", self.temperature)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        im = batch["image"].transpose(1, 3)
+        sp = batch["spectrum"].squeeze(-1)
+        im_emb = self.image_encoder((im, None))
+        sp_emb = self.spectrum_encoder(sp)
+
+        val_loss = self.loss(im_emb, sp_emb, self.temperature)
+        self.log("validation_loss", val_loss)
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adam(
+            self.parameters(), lr=5e-5, weight_decay=0.2
+        )  # self.params fetches all the trainable parameters of the model
+        scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=80, eta_min=5e-6)
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "interval": "epoch",
+                "frequency": 1,
+            },
+        }
