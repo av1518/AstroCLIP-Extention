@@ -1,0 +1,47 @@
+{
+    "os": "Windows-11-10.0.22631-SP0",
+    "python": "3.12.2",
+    "heartbeatAt": "2024-05-08T20:39:14.198895",
+    "startedAt": "2024-05-08T20:39:12.243419",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "c:\\Users\\Andre\\OneDrive - University of Cambridge\\Modules\\project\\av662\\src\\reproduction_av\\main.py",
+    "codePathLocal": null,
+    "git": {
+        "remote": "https://gitlab.developers.cam.ac.uk/phy/data-intensive-science-mphil/projects/av662.git",
+        "commit": "f34b64f3d77567a73b3d637f5d69d328fab18dbc"
+    },
+    "email": "65544264+av1518@users.noreply.github.com",
+    "root": "C:/Users/Andre/OneDrive - University of Cambridge/Modules/project/av662",
+    "host": "LAPTOP-ETLMHNRH",
+    "username": "Andre",
+    "executable": "c:\\Users\\Andre\\anaconda3\\envs\\astroclip_2\\python.exe",
+    "cpu_count": 8,
+    "cpu_count_logical": 16,
+    "cpu_freq": {
+        "current": 3301.0,
+        "min": 0.0,
+        "max": 3301.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 3301.0,
+            "min": 0.0,
+            "max": 3301.0
+        }
+    ],
+    "disk": {},
+    "gpu": "NVIDIA GeForce RTX 3060 Laptop GPU",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA GeForce RTX 3060 Laptop GPU",
+            "memory_total": 6442450944
+        }
+    ],
+    "memory": {
+        "total": 15.4049072265625
+    }
+}
