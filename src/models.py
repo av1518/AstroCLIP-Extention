@@ -102,11 +102,12 @@ class AstroCLIP(L.LightningModule):
     CLIP loss
     """
 
-    def __init__(self, image_encoder, spectrum_encoder, image_transforms):
+    def __init__(self, image_encoder, spectrum_encoder, image_transforms, lr=5e-5):
         super().__init__()
 
         self.image_transforms = image_transforms
         self.image_encoder = image_encoder
+        self.lr = lr
 
         # Freeze all layers except the last one
         for name, child in self.image_encoder.backbone.named_children():
@@ -153,13 +154,15 @@ class AstroCLIP(L.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(
-            self.parameters(), lr=5e-5, weight_decay=0.2
+            self.parameters(), lr=self.lr, weight_decay=0.2
         )  # self.params fetches all the trainable parameters of the model
-        scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=80, eta_min=5e-6)
+        # scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=80, eta_min=5e-6)
+        scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, patience=1)
         return {
             "optimizer": optimizer,
             "lr_scheduler": {
                 "scheduler": scheduler,
+                "monitor": "train_loss",
                 "interval": "epoch",
                 "frequency": 1,
             },
