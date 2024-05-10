@@ -3,3 +3,5 @@ __pycache__/*
 __pychache__
 
 *.pyc
+
+wandb/
