@@ -1,7 +1,5 @@
 import lightning as L
 import torch, torch.nn as nn, torch.nn.functional as F
-
-# from fillm.run.model import * Commented out by Andreas
 import torch.nn.functional as F
 from src.loss import CLIPLoss
 import numpy as np
@@ -121,6 +119,8 @@ class AstroCLIP(L.LightningModule):
         sp_emb = self.spectrum_encoder(spec)
 
         loss = self.loss(im_emb, sp_emb, self.temperature)
+        loss_no_temperature = self.loss(im_emb, sp_emb, 1.0)
+        self.log("train_loss_no_temperature", loss_no_temperature)
         self.log("train_loss", loss)
         self.log("temperature", self.temperature)
         return loss
@@ -133,6 +133,8 @@ class AstroCLIP(L.LightningModule):
 
         val_loss = self.loss(im_emb, sp_emb, self.temperature)
         self.log("validation_loss", val_loss)
+        val_loss_no_temperature = self.loss(im_emb, sp_emb, 1.0)
+        self.log("validation_loss_no_temperature", val_loss_no_temperature)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(

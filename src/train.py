@@ -64,10 +64,10 @@ def main():
     # Create the dataloaders
     print("Creating dataloaders")
     train_dataloader = DataLoader(
-        dataset["train"], batch_size=512, shuffle=True, num_workers=3
+        dataset["train"], batch_size=512, shuffle=True, num_workers=0, drop_last=True
     )
     val_dataloader = DataLoader(
-        dataset["test"], batch_size=512, shuffle=False, num_workers=3
+        dataset["test"], batch_size=512, shuffle=False, num_workers=0, drop_last=True
     )
 
     print("Dataloaders created")
