@@ -1,7 +1,5 @@
 import lightning as L
 import torch, torch.nn as nn, torch.nn.functional as F
-
-# from fillm.run.model import * Commented out by Andreas
 import torch.nn.functional as F
 from src.loss import CLIPLoss
 import numpy as np
@@ -66,6 +64,21 @@ class ExtendedMLP(nn.Module):
         return self.additional_layers(x)
 
 
+class MLP(nn.Module):
+    def __init__(self, layer_sizes, dropout=0.1):
+        super(MLP, self).__init__()
+        layers = []
+        for i in range(len(layer_sizes) - 1):
+            layers.append(nn.Linear(layer_sizes[i], layer_sizes[i + 1]))
+            layers.append(nn.PReLU(num_parameters=layer_sizes[i + 1]))
+            layers.append(nn.Dropout(dropout))
+
+        self.additional_layers = nn.Sequential(*layers)
+
+    def forward(self, x):
+        return self.additional_layers(x)
+
+
 class ExtendedSpender(nn.Module):
     def __init__(self, dropout=0.1):
         super(ExtendedSpender, self).__init__()
@@ -121,6 +134,8 @@ class AstroCLIP(L.LightningModule):
         sp_emb = self.spectrum_encoder(spec)
 
         loss = self.loss(im_emb, sp_emb, self.temperature)
+        loss_no_temperature = self.loss(im_emb, sp_emb, 1.0)
+        self.log("train_loss_no_temperature", loss_no_temperature)
         self.log("train_loss", loss)
         self.log("temperature", self.temperature)
         return loss
@@ -133,6 +148,8 @@ class AstroCLIP(L.LightningModule):
 
         val_loss = self.loss(im_emb, sp_emb, self.temperature)
         self.log("validation_loss", val_loss)
+        val_loss_no_temperature = self.loss(im_emb, sp_emb, 1.0)
+        self.log("validation_loss_no_temperature", val_loss_no_temperature)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(
