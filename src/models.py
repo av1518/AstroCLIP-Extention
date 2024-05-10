@@ -80,13 +80,13 @@ class MLP(nn.Module):
 
 
 class ExtendedSpender(nn.Module):
-    def __init__(self, dropout=0.1):
+    def __init__(self, sp_layers, dropout=0.1):
         super(ExtendedSpender, self).__init__()
         ssds, spec_model = torch.hub.load("pmelchior/spender", "desi_edr_galaxy")
         self.spec_encoder = spec_model.encoder
-        self.extended_mlp = ExtendedMLP(dropout=dropout)
+        self.extended_mlp = MLP(layer_sizes=sp_layers, dropout=dropout)
 
-        # Freeze all layers except the last one
+        # Freeze all layers in the Spender encoder (except the extended MLP layer)
         for name, param in self.spec_encoder.named_parameters():
             param.requires_grad = False
 

@@ -223,11 +223,11 @@ output = spec_encoder(random_spectrum)
 print(output.shape)
 
 # %% Load ExtendedSpender
-extended_encoder = ExtendedSpender()
+extended_encoder = ExtendedSpender([6, 128, 128])
 
-# %%
 # pass the random spectrum to the model
 sp_embeddings = extended_encoder(random_spectrum).to("cpu")
+random_spectrum = random_batch["spectrum"].squeeze(-1)
 print(sp_embeddings.shape)
 
 # %%
