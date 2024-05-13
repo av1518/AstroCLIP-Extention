@@ -37,10 +37,11 @@ def main():
 
     torch.set_float32_matmul_precision("medium")
 
-    CACHE_DIR = "C:\datasets_astroclip"
+    CACHE_DIR = "data/"
+    print("Loading dataset")
     dataset = load_dataset("src/datasets_files/legacy_survey.py", cache_dir=CACHE_DIR)
     dataset.set_format(type="torch", columns=["image", "spectrum"])
-    #
+    print("Dataset loaded")
 
     # Create the dataloaders
     print("Creating dataloaders")
@@ -62,6 +63,7 @@ def main():
     print("Dataloaders created")
 
     #  Load image and spectrum models
+    print("load")
     checkpoint_path = "data/weights/resnet50.ckpt"
     moco_model = Moco_v2.load_from_checkpoint(checkpoint_path=checkpoint_path)
     # extract the backbone model

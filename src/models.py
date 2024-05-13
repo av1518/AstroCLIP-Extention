@@ -1,5 +1,5 @@
 import lightning as L
-import torch, torch.nn as nn, torch.nn.functional as F
+import torch, torch.nn as nn
 import torch.nn.functional as F
 from src.loss import CLIPLoss
 import numpy as np
