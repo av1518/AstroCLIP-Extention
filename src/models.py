@@ -1,7 +1,11 @@
 import lightning as L
 import torch, torch.nn as nn
 import torch.nn.functional as F
-from loss import CLIPLoss
+
+try:
+    from loss import CLIPLoss
+except ModuleNotFoundError:
+    from src.loss import CLIPLoss
 import numpy as np
 from torch.optim import lr_scheduler
 
