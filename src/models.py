@@ -1,7 +1,7 @@
 import lightning as L
 import torch, torch.nn as nn
 import torch.nn.functional as F
-from src.loss import CLIPLoss
+from loss import CLIPLoss
 import numpy as np
 from torch.optim import lr_scheduler
 
@@ -108,6 +108,7 @@ class AstroCLIP(L.LightningModule):
         self.image_transforms = image_transforms
         self.image_encoder = image_encoder
         self.lr = lr
+        self.save_hyperparameters()
 
         # Freeze all layers except the last one
         for name, child in self.image_encoder.backbone.named_children():
@@ -157,7 +158,7 @@ class AstroCLIP(L.LightningModule):
             self.parameters(), lr=self.lr, weight_decay=0.2
         )  # self.params fetches all the trainable parameters of the model
         # scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=80, eta_min=5e-6)
-        scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, patience=1)
+        scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, patience=2)
         return {
             "optimizer": optimizer,
             "lr_scheduler": {
