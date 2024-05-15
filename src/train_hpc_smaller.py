@@ -33,8 +33,8 @@ print("starting main")
 
 
 def main():
-    sp_layers = [6, 256, 1024, 1024, 1024, 1024, 256, 128]
-    lr = 1e-5
+    sp_layers = [6, 64, 128, 128, 128, 128, 128]
+    lr = 0.5e-5
 
     torch.set_float32_matmul_precision("medium")
 
