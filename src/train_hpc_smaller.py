@@ -25,7 +25,6 @@ from pytorch_lightning.loggers import WandbLogger
 
 
 print("imports done")
-
 wandb.login(key="a0dfc00d969fb01444f3bc945793545ba48f3673")
 # %% Get datasets
 
@@ -33,7 +32,7 @@ print("starting main")
 
 
 def main():
-    sp_layers = [6, 64, 128, 128, 128, 128, 128]
+    sp_layers = [6, 128, 512, 512, 512, 256, 128]
     lr = 0.5e-5
 
     torch.set_float32_matmul_precision("medium")
@@ -92,9 +91,6 @@ def main():
 
     print("AstroCLIP model created")
 
-    sp_layers_str = "-".join(map(str, sp_layers))
-    lr_str = f"{lr:.1e}"  # Format learning rate in scientific notation
-
     trainer = L.Trainer(
         max_epochs=50,
         callbacks=[
@@ -103,7 +99,7 @@ def main():
             )
         ],
         logger=wandb_logger,
-        log_every_n_steps=1,
+        log_every_n_steps=10,
     )
 
     print("Starting training")

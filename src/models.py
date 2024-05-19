@@ -141,7 +141,13 @@ class AstroCLIP(L.LightningModule):
 
         loss = self.loss(im_emb, sp_emb, self.temperature)
         loss_no_temperature = self.loss(im_emb, sp_emb, 1.0)
-        self.log("train_loss_no_temperature", loss_no_temperature)
+
+        lr = self.optimizers().param_groups[0]["lr"]
+        self.log("learning_rate", lr, on_epoch=True, logger=True)
+
+        self.log(
+            "train_loss_no_temperature", loss_no_temperature, on_epoch=True, logger=True
+        )
         self.log("train_loss", loss)
         self.log("temperature", self.temperature)
         return loss
