@@ -273,3 +273,64 @@ for i in range(4):
     plt.legend()
 
 # %%
+# from astropy.table import Table, join
+
+# import h5py
+
+# # Open the HDF5 file
+# file_path = 'C:\datasets_astroclip\lgal_fsps.mocha.v1.3.hdf5'
+# hdf5_file = h5py.File(file_path, 'r')
+
+# # Function to recursively print all groups and datasets
+# def print_hdf5_structure(name, obj):
+#     print(name)
+
+# # Print the structure of the HDF5 file
+# hdf5_file.visititems(print_hdf5_structure)
+
+# # Close the file
+# hdf5_file.close()
+
+# # provabgs = Table.read("C:\datasets_astroclip\lgal_fsps.mocha.v1.3.hdf5")
+# %% Zero shot redshift prediction
+from sklearn.neighbors import KNeighborsRegressor
+import seaborn as sns
+from sklearn.metrics import r2_score
+
+neigh = KNeighborsRegressor(weights="distance", n_neighbors=16)
+neigh.fit(image_features[:-5000], redshifts[:-5000])
+preds = neigh.predict(image_features[-5000:])
+
+
+sns.scatterplot(x=redshifts[-5000:], y=preds, s=5, color=".15")
+sns.histplot(x=redshifts[-5000:], y=preds, bins=64, pthresh=0.1, cmap="mako")
+sns.kdeplot(x=redshifts[-5000:], y=preds, levels=5, color="w", linewidths=1)
+plt.xlabel("True redshift")
+plt.ylabel("Predicted redshift")
+plt.plot([0, 1], [0, 1], color="grey", linestyle="--")
+plt.xlim(0, 0.65)
+plt.ylim(0, 0.65)
+plt.text(
+    0.05,
+    0.55,
+    "$R^2$ score: %0.2f" % (r2_score(redshifts[-5000:], preds)),
+    fontsize="large",
+)
+# %% from spectra
+neigh = KNeighborsRegressor(weights="distance", n_neighbors=16)
+neigh.fit(spectra[:-5000], redshifts[:-5000])
+preds = neigh.predict(spectra[-5000:])
+sns.scatterplot(x=redshifts[-5000:], y=preds, s=5, color=".15")
+sns.histplot(x=redshifts[-5000:], y=preds, bins=64, pthresh=0.1, cmap="mako")
+sns.kdeplot(x=redshifts[-5000:], y=preds, levels=5, color="w", linewidths=1)
+plt.xlabel("True redshift")
+plt.ylabel("Predicted redshift")
+plt.plot([0, 1], [0, 1], color="grey", linestyle="--")
+plt.xlim(0, 0.65)
+plt.ylim(0, 0.65)
+plt.text(
+    0.05,
+    0.55,
+    "$R^2$ score: %0.2f" % (r2_score(redshifts[-5000:], preds)),
+    fontsize="large",
+)

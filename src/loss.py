@@ -30,8 +30,8 @@ class CLIPLoss(nn.Module):
         @return Either a dictionary containing the loss if output_as_dict is True, or a scalar tensor representing the loss.
         """
         # Normalise embeddings and compute the cosine similarity with scaling
-        norm_im_emb = F.normalize(im_emb, p=2, dim=1)
-        norm_sp_emb = F.normalize(sp_emb, p=2, dim=1)
+        norm_im_emb = F.normalize(im_emb, p=2, dim=-1, eps=1e-3)
+        norm_sp_emb = F.normalize(sp_emb, p=2, dim=-1, eps=1e-3)
 
         im_cos_matrix = temperature * torch.matmul(norm_im_emb, norm_sp_emb.T)
         sp_cos_matrix = im_cos_matrix.T

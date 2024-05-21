@@ -43,6 +43,7 @@ sns.set_context("paper", font_scale=1.5, rc={"lines.linewidth": 2})
 # %% Get datasets
 CACHE_DIR = "C:\datasets_astroclip"
 dataset = load_dataset("src/datasets_files/legacy_survey.py", cache_dir=CACHE_DIR)
+# %%
 dataset.set_format(type="torch", columns=["image", "spectrum"])
 
 # %%

@@ -81,6 +81,8 @@ CMD="$application $options"
 #! Choose this for a MPI code using OpenMPI:
 #CMD="mpirun -npernode $mpi_tasks_per_node -np $np $application $options"
 
+export WANDB_DATA_DIR=/home/av662/rds/hpc-work/astroclip_project/
+export WANDB_ARTIFACT_LOCATION=/home/av662/rds/hpc-work/astroclip_project/
 
 ###############################################################
 ### You should not have to change anything below this line ####
