@@ -334,3 +334,5 @@ plt.text(
     "$R^2$ score: %0.2f" % (r2_score(redshifts[-5000:], preds)),
     fontsize="large",
 )
+
+# %%
