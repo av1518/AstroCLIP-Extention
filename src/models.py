@@ -100,6 +100,24 @@ class ExtendedSpender(nn.Module):
         return x
 
 
+class AlternateSpender(nn.Module):
+    def __init__(self, sp_layers, dropout=0.1):
+        super(AlternateSpender, self).__init__()
+        _, spec_model = torch.hub.load("pmelchior/spender", "desi_edr_galaxy")
+        self.spec_encoder = spec_model.encoder
+        self.spec_encoder.mlp = MLP(layer_sizes=sp_layers, dropout=dropout)
+
+        for param in self.spec_encoder.parameters():
+            param.requires_grad = False
+
+        # Ensure the new MLP is trainable
+        for param in self.spec_encoder.mlp.parameters():
+            param.requires_grad = True
+
+    def forward(self, x):
+        return self.spec_encoder(x)
+
+
 class AstroCLIP(L.LightningModule):
     """
     A class that loads the pretrained models, freezes all the layers except the last one in image encoder and is then trained using
@@ -170,7 +188,7 @@ class AstroCLIP(L.LightningModule):
             self.parameters(), lr=self.lr, weight_decay=0.2
         )  # self.params fetches all the trainable parameters of the model
         # scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=80, eta_min=5e-6)
-        scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, patience=2)
+        scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, patience=10)
         return {
             "optimizer": optimizer,
             "lr_scheduler": {

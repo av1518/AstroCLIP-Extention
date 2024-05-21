@@ -37,7 +37,7 @@ def main():
 
     torch.set_float32_matmul_precision("medium")
 
-    CACHE_DIR = "data/"
+    CACHE_DIR = "C:\datasets_astroclip"
     print("Loading dataset")
     dataset = load_dataset("src/datasets_files/legacy_survey.py", cache_dir=CACHE_DIR)
     dataset.set_format(type="torch", columns=["image", "spectrum"])
@@ -49,14 +49,14 @@ def main():
         dataset["train"],
         batch_size=512,
         shuffle=True,
-        num_workers=10,
+        num_workers=0,
         drop_last=True,
     )
     val_dataloader = DataLoader(
         dataset["test"],
         batch_size=512,
         shuffle=False,
-        num_workers=10,
+        num_workers=0,
         drop_last=True,
     )
 
