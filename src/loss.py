@@ -33,7 +33,8 @@ class CLIPLoss(nn.Module):
         norm_im_emb = F.normalize(im_emb, p=2, dim=-1, eps=1e-3)
         norm_sp_emb = F.normalize(sp_emb, p=2, dim=-1, eps=1e-3)
 
-        im_cos_matrix = temperature * torch.matmul(norm_im_emb, norm_sp_emb.T)
+        # im_cos_matrix = temperature * torch.matmul(norm_im_emb, norm_sp_emb.T)
+        im_cos_matrix = temperature * norm_im_emb @ norm_sp_emb.T
         sp_cos_matrix = im_cos_matrix.T
         # Create sequence of indices for batch samples to use as labels
         labels = torch.arange(

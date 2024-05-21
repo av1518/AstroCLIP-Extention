@@ -122,7 +122,9 @@ class AstroCLIP(L.LightningModule):
 
         self.spectrum_encoder = spectrum_encoder
 
-        self.temperature = nn.Parameter(torch.tensor(np.log(15.5)))  # fixed temperature
+        self.temperature = nn.Parameter(
+            torch.tensor(np.log(15.5)), requires_grad=False
+        )  # fixed temperature
         self.loss = CLIPLoss()
 
     def forward(self, x, image=True):
@@ -178,3 +180,9 @@ class AstroCLIP(L.LightningModule):
                 "frequency": 1,
             },
         }
+
+    def print_trainable_parameters(self):
+        print("Trainable Parameters:")
+        for name, param in self.named_parameters():
+            if param.requires_grad:
+                print(f"Parameter: {name}, Shape: {param.shape}")

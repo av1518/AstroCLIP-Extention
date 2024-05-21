@@ -225,7 +225,8 @@ print(output.shape)
 
 # %% Load ExtendedSpender
 extended_encoder = ExtendedSpender([6, 128, 128])
-
+extended_encoder
+# %%
 # pass the random spectrum to the model
 sp_embeddings = extended_encoder(random_spectrum).to("cpu")
 random_spectrum = random_batch["spectrum"].squeeze(-1)
@@ -238,3 +239,96 @@ clip = CLIPLoss()
 logits, logits_t = clip.get_cosine_matrix(im_embedding, sp_embeddings)
 
 # %%
+from src.models import AstroCLIP
+from torchvision.transforms import (
+    Compose,
+    RandomVerticalFlip,
+    RandomHorizontalFlip,
+    RandomRotation,
+    RandomErasing,
+    ToTensor,
+    CenterCrop,
+    ToPILImage,
+    InterpolationMode,
+)
+
+sp_layers = [6, 128, 256, 256, 256, 256, 128]
+lr = 1e-5
+
+checkpoint_path = "data/weights/resnet50.ckpt"
+moco_model = Moco_v2.load_from_checkpoint(checkpoint_path=checkpoint_path)
+# extract the backbone model
+backbone = moco_model.encoder_q
+im_encoder = OutputExtractor(backbone)
+sp_encoder = ExtendedSpender(sp_layers=sp_layers)
+
+# Setting up image augmentations
+image_transforms = Compose(
+    [
+        RandomRotation(45, interpolation=InterpolationMode.BILINEAR),
+        RandomHorizontalFlip(),
+        RandomVerticalFlip(),
+        CenterCrop(96),
+    ]
+)
+
+CLIP = AstroCLIP(
+    image_encoder=im_encoder,
+    spectrum_encoder=sp_encoder,
+    image_transforms=image_transforms,
+    lr=lr,
+)
+
+# %%
+
+CLIP.print_trainable_parameters()
+
+
+# %%
+def print_trainable_parameters(model):
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            print(f"Layer {name} is trainable.")
+        else:
+            print(f"Layer {name} is frozen (not trainable).")
+
+
+print_trainable_parameters(CLIP.image_encoder)
+CLIP.image_encoder.backbone.fc
+# %%
+print_trainable_parameters(CLIP.spectrum_encoder)
+# %%
+CLIP.temperature
+
+# %%
+batch = next(iter(train_dataloader))
+# %%
+spectra = batch["spectrum"].to("cuda")
+im = batch["image"].transpose(1, 3).to("cuda")
+
+spec = batch["spectrum"].squeeze(-1)
+im_emb = CLIP.image_encoder((im, None))
+sp_emb = CLIP.spectrum_encoder(spec)
+
+norm_im_emb = F.normalize(im_emb, p=2, dim=-1, eps=1e-3).to("cuda")
+norm_sp_emb = F.normalize(sp_emb, p=2, dim=-1, eps=1e-3).to("cuda")
+
+# %%
+temperature = nn.Parameter(torch.tensor(np.log(15.5)), requires_grad=False).to(
+    "cuda"
+)  # fixed temperature
+im_cos_matrix = temperature * torch.matmul(norm_im_emb, norm_sp_emb.T)
+test_cos = temperature * norm_im_emb @ norm_sp_emb.T
+print(im_cos_matrix == test_cos)
+sp_cos_matrix = im_cos_matrix.T
+
+print(im_cos_matrix)
+print(test_cos)
+# %%
+# Create sequence of indices for batch samples to use as labels
+labels = torch.arange(im_cos_matrix.size(0), device=im_emb.device, dtype=torch.long)
+
+# Calculate the average of both computed losses
+total_loss = 0.5 * (
+    F.cross_entropy(im_cos_matrix, labels) + F.cross_entropy(sp_cos_matrix, labels)
+)

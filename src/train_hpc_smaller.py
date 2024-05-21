@@ -32,8 +32,8 @@ print("starting main")
 
 
 def main():
-    sp_layers = [6, 128, 512, 512, 512, 256, 128]
-    lr = 0.5e-5
+    sp_layers = [6, 128, 256, 256, 256, 256, 128]
+    lr = 5e-4
 
     torch.set_float32_matmul_precision("medium")
 
@@ -84,7 +84,7 @@ def main():
     )
 
     wandb_logger = WandbLogger(
-        log_model="all", project="astroclip", name=f"{sp_layers}, lr={lr}, hpc-1"
+        log_model="all", project="astroclip", name=f"{sp_layers}, lr={lr}, hpc-2"
     )
 
     model = AstroCLIP(im_encoder, sp_encoder, image_transforms, lr=lr)
