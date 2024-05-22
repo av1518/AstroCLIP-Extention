@@ -32,7 +32,7 @@ print("starting main")
 
 
 def main():
-    sp_layers = [256, 256, 256, 128, 128]
+    sp_layers = [256, 256, 256, 128]
     lr = 5e-4
 
     torch.set_float32_matmul_precision("medium")
@@ -92,7 +92,7 @@ def main():
     print("AstroCLIP model created")
 
     trainer = L.Trainer(
-        max_epochs=50,
+        max_epochs=80,
         callbacks=[
             ModelCheckpoint(
                 every_n_epochs=1,

@@ -7,7 +7,7 @@ from datasets import load_dataset
 from pl_bolts.models.self_supervised import Moco_v2
 import torch.nn.functional as F
 import torch.optim.lr_scheduler as lr_scheduler
-from src.models import OutputExtractor, ExtendedSpender, AstroCLIP
+from src.models import OutputExtractor, ExtendedSpender, AstroCLIP, AlternateSpender
 from torch.utils.data import Subset, DataLoader
 from torchvision.transforms import (
     Compose,
@@ -34,14 +34,20 @@ dataset.set_format(type="torch", columns=["image", "spectrum", "redshift"])
 
 testdata = DataLoader(dataset["test"], batch_size=512, shuffle=False, num_workers=0)
 # %%
+import sys
+
+sys.path.append(
+    r"C:\Users\Andre\OneDrive - University of Cambridge\Modules\project\av662\src"
+)
+
 checkpoint_path = "data/weights/resnet50.ckpt"
 moco_model = Moco_v2.load_from_checkpoint(checkpoint_path=checkpoint_path)
 # extract the backbone model
 backbone = moco_model.encoder_q
 im_encoder = OutputExtractor(backbone)
 print("image model loaded")
-sp_layers = [6, 128, 256, 256, 256, 256, 128]
-sp_encoder = ExtendedSpender(sp_layers=sp_layers)
+sp_layers = [256, 128, 128, 128]
+sp_encoder = AlternateSpender(sp_layers=sp_layers)
 print("spectrum model loaded")
 
 image_transforms = Compose(
@@ -54,7 +60,7 @@ image_transforms = Compose(
 )
 
 CLIP = AstroCLIP.load_from_checkpoint(
-    "model_checkpoints/hpc-15-05-epoch=49-step=15450.ckpt",
+    "model_checkpoints/epoch=49-[256, 128, 128, 128], lr=0.0005, hpc-alt-1.ckpt",
     image_encoder=im_encoder,
     spectrum_encoder=sp_encoder,
     image_transforms=image_transforms,
@@ -109,7 +115,7 @@ source_spec = np.concatenate(source_spec, axis=0)
 print(images.shape, im_embeddings.shape, redshifts.shape)
 # %%
 np.savez(
-    "data/embeddings.npz",
+    "data/embeddings-alt1.npz",
     images=images,
     im_embeddings=im_embeddings,
     spectra=spectra,
@@ -118,24 +124,12 @@ np.savez(
 )
 # %%
 # Load the embeddings
-emb = np.load("data/embeddings.npz")
+emb = np.load("data/embeddings-alt1.npz")
 images = emb["images"]
 im_embeddings = emb["im_embeddings"]
 spectra = emb["spectra"]
 redshifts = emb["redshifts"]
 source_spec = emb["source_spec"]
-
-
-# %%Plot the first 64 images
-
-plt.figure(figsize=[10, 10])
-for i in range(8):
-    for j in range(8):
-        plt.subplot(8, 8, i * 8 + j + 1)
-        plt.imshow(images[i * 8 + j])
-        plt.axis("off")
-plt.subplots_adjust(wspace=0.01, hspace=0.01)
-
 # %%
 
 l = np.linspace(3586.7408577, 10372.89543574, len(source_spec[0]))
@@ -146,6 +140,7 @@ plt.imshow(images[ind_query])
 plt.axis("off")
 plt.subplot(1, 2, 2)
 plt.plot(l, source_spec[ind_query], color="grey", alpha=0.5)
+plt.title("Example query galaxy spectrum")
 
 # normalise the embedding by diving by the L2 norm
 image_features = im_embeddings / np.linalg.norm(im_embeddings, axis=-1, keepdims=True)

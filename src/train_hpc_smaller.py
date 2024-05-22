@@ -32,7 +32,7 @@ print("starting main")
 
 
 def main():
-    sp_layers = [256, 128, 128, 128]
+    sp_layers = [256, 256, 256, 128]
     lr = 5e-4
 
     torch.set_float32_matmul_precision("medium")
@@ -84,7 +84,9 @@ def main():
     )
 
     wandb_logger = WandbLogger(
-        log_model="all", project="astroclip", name=f"{sp_layers}, lr={lr}, hpc-alt-1"
+        log_model="all",
+        project="astroclip",
+        name=f"{sp_layers}, lr={lr}, alt-cropped-validation",
     )
 
     model = AstroCLIP(im_encoder, sp_encoder, image_transforms, lr=lr)
@@ -92,7 +94,7 @@ def main():
     print("AstroCLIP model created")
 
     trainer = L.Trainer(
-        max_epochs=50,
+        max_epochs=80,
         callbacks=[
             ModelCheckpoint(
                 every_n_epochs=1,

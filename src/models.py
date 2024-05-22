@@ -174,6 +174,7 @@ class AstroCLIP(L.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         im = batch["image"].transpose(1, 3)
+        im = self.image_transforms(im)
         sp = batch["spectrum"].squeeze(-1)
         im_emb = self.image_encoder((im, None))
         sp_emb = self.spectrum_encoder(sp)
@@ -188,7 +189,7 @@ class AstroCLIP(L.LightningModule):
             self.parameters(), lr=self.lr, weight_decay=0.2
         )  # self.params fetches all the trainable parameters of the model
         # scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=80, eta_min=5e-6)
-        scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, patience=10)
+        scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, patience=8)
         return {
             "optimizer": optimizer,
             "lr_scheduler": {
