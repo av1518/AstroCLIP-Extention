@@ -67,7 +67,7 @@ CLIP = AstroCLIP.load_from_checkpoint(
 )
 
 im_embeddings = []
-images = []
+source_images = []
 redshifts = []
 spectra = []
 source_spec = []
@@ -99,24 +99,24 @@ for batch in tqdm(testdata):
         processed_images.append(clipped_image)
 
     stacked_images = np.stack(processed_images, axis=0)
-    images.append(stacked_images)
+    source_images.append(stacked_images)
 
     # count += 1
     # if count == 3:
     #     break
 
 # %%
-images = np.concatenate(images, axis=0)
+source_images = np.concatenate(source_images, axis=0)
 spectra = np.concatenate(spectra, axis=0)
 im_embeddings = np.concatenate(im_embeddings, axis=0)
 redshifts = np.concatenate(redshifts, axis=0)
 source_spec = np.concatenate(source_spec, axis=0)
 
-print(images.shape, im_embeddings.shape, redshifts.shape)
+print(source_images.shape, im_embeddings.shape, redshifts.shape)
 # %%
 np.savez(
     "data/embeddings-alt1.npz",
-    images=images,
+    images=source_images,
     im_embeddings=im_embeddings,
     spectra=spectra,
     redshifts=redshifts,
@@ -125,41 +125,237 @@ np.savez(
 # %%
 # Load the embeddings
 emb = np.load("data/embeddings-alt1.npz")
-images = emb["images"]
+source_images = emb["images"]
 im_embeddings = emb["im_embeddings"]
 spectra = emb["spectra"]
 redshifts = emb["redshifts"]
 source_spec = emb["source_spec"]
 # %%
+import torch.nn.functional as F
 
 l = np.linspace(3586.7408577, 10372.89543574, len(source_spec[0]))
-ind_query = 4
+ind_query = 12
 plt.figure(figsize=[15, 5])
 plt.subplot(1, 2, 1)
-plt.imshow(images[ind_query])
+plt.imshow(source_images[ind_query])
 plt.axis("off")
 plt.subplot(1, 2, 2)
 plt.plot(l, source_spec[ind_query], color="grey", alpha=0.5)
 plt.title("Example query galaxy spectrum")
 
 # normalise the embedding by diving by the L2 norm
-image_features = im_embeddings / np.linalg.norm(im_embeddings, axis=-1, keepdims=True)
-spectra_features = spectra / np.linalg.norm(spectra, axis=-1, keepdims=True)
+# image_features = im_embeddings / np.linalg.norm(im_embeddings, axis=-1, keepdims=True)
+# spectra_features = spectra / np.linalg.norm(spectra, axis=-1, keepdims=True)
+
+image_features = F.normalize(torch.tensor(im_embeddings), p=2, dim=-1).numpy()
+spectra_features = F.normalize(torch.tensor(spectra), p=2, dim=-1).numpy()
+
 # compute the similarity between the query spectrum and all the image embeddings (i.e. dot product)
-cross_similarity = (
-    spectra_features[ind_query] @ image_features.T
-)  # vector of similarity scores
+cross_sp = spectra_features[ind_query] @ image_features.T  # vector of similarity scores
 # %% Spectrum query -> top 64 image retrieval
 # Sort the indices of the 'similarity' array in descending order
 print("Query with spectrum-> image cross similarity")
-ind_sorted = np.argsort(cross_similarity)[::-1]
+ind_sorted = np.argsort(cross_sp)[::-1]
 plt.figure(figsize=[10, 10])
 for i in range(8):
     for j in range(8):
         plt.subplot(8, 8, i * 8 + j + 1)
-        plt.imshow(images[ind_sorted[i * 8 + j]])
+        plt.imshow(source_images[ind_sorted[i * 8 + j]])
         plt.axis("off")
 plt.subplots_adjust(wspace=0.01, hspace=0.01)
+
+# %%
+
+import numpy as np
+
+ind_queries = [4, 12, 29, 23]
+results = {
+    "images_sp_sp": [],  # Spectral query, spectral retrieval (sp_sim)
+    "images_im_im": [],  # Image query, image retrieval (im_sim)
+    "images_sp_im": [],  # Spectral query, image retrieval (cross_sp_sim)
+    "images_im_sp": [],  # Image query, spectral retrieval (cross_im_sim)
+    "spectra_sp_sp": [],  # Spectral query, spectral retrieval (sp_sim)
+    "spectra_im_im": [],  # Image query, spectral retrieval (im_sim)
+    "spectra_sp_im": [],  # Spectral query, image retrieval (cross_sp_sim)
+    "spectra_im_sp": [],  # Image query, spectral retrieval (cross_im_sim)
+}
+
+for ind_query in ind_queries:
+    sp_sim = spectra_features[ind_query] @ spectra_features.T
+    im_sim = image_features[ind_query] @ image_features.T
+    cross_im_sim = image_features[ind_query] @ spectra_features.T
+    cross_sp_sim = spectra_features[ind_query] @ image_features.T
+
+    results["images_sp_sp"].append(
+        [source_images[i] for i in np.argsort(sp_sim)[::-1][:8]]
+    )
+    results["images_im_im"].append(
+        [source_images[i] for i in np.argsort(im_sim)[::-1][:8]]
+    )
+    results["images_sp_im"].append(
+        [source_images[i] for i in np.argsort(cross_sp_sim)[::-1][:8]]
+    )
+    results["images_im_sp"].append(
+        [source_images[i] for i in np.argsort(cross_im_sim)[::-1][:8]]
+    )
+
+    results["spectra_sp_sp"].append(
+        [source_spec[i] for i in np.argsort(sp_sim)[::-1][:8]]
+    )
+    results["spectra_im_im"].append(
+        [source_spec[i] for i in np.argsort(im_sim)[::-1][:8]]
+    )
+    results["spectra_sp_im"].append(
+        [source_spec[i] for i in np.argsort(cross_sp_sim)[::-1][:8]]
+    )
+    results["spectra_im_sp"].append(
+        [source_spec[i] for i in np.argsort(cross_im_sim)[::-1][:8]]
+    )
+
+# The results dictionary now holds the top similar images and spectra for each query index.
+
+plt.figure(figsize=[20, 10])
+for n, i in enumerate(ind_queries):
+    # Plot query image
+    plt.subplot(5, 13, n * 13 + 1)
+    plt.imshow(source_images[i])
+    plt.axis("off")
+    if n == 0:
+        plt.title("Query Image")
+
+    # Image similarity
+    for j in range(3):
+        plt.subplot(5, 13, n * 13 + j + 1 + 1)
+        plt.imshow(results["images_sp_sp"][n][j])
+        plt.axis("off")
+        if n == 0 and j == 0:
+            plt.title("Spectrum-Spectrum\nSimilarity")
+
+    # Spectra similarity
+    for j in range(3):
+        plt.subplot(5, 13, n * 13 + j + 1 + 3 + 1)
+        plt.imshow(results["images_im_im"][n][j])
+        plt.axis("off")
+        if n == 0 and j == 0:
+            plt.title("Image-Image\nSimilarity")
+
+    # Cross image similarity (spectral query, image retrieval)
+    for j in range(3):
+        plt.subplot(5, 13, n * 13 + j + 1 + 6 + 1)
+        plt.imshow(results["images_sp_im"][n][j])
+        plt.axis("off")
+        if n == 0 and j == 0:
+            plt.title("Cross Spectra-Image\nSimilarity")
+
+    # Cross spectrum similarity (image query, spectral retrieval)
+    for j in range(3):
+        plt.subplot(5, 13, n * 13 + j + 1 + 9 + 1)
+        plt.imshow(results["images_im_sp"][n][j])
+        plt.axis("off")
+        if n == 0 and j == 0:
+            plt.title("Cross Image-Spectra\-Similarity")
+
+plt.subplots_adjust(wspace=0.0, hspace=0.3)
+# plt.savefig('retrieval.png', bbox_inches='tight', pad_inches=0)
+plt.show()
+
+# %% Plot spectral retrieval
+
+query_sp = source_spec[4]
+plt.figure(figsize=[15, 5])
+
+plt.title("Image query, image retrieval (im_im)")
+plt.ylim(-0, 20)
+for j in range(3):
+    plt.plot(
+        l, results["spectra_im_im"][0][j], color="grey", alpha=0.5, label="Retrieved"
+    )
+plt.plot(l, query_sp, color="blue", alpha=0.5, label="Query")
+plt.legend()
+plt.show()
+
+# %% Do the same looping over all ind queries
+
+
+# spectra sp_sp
+for n, i in enumerate(ind_queries):
+    query_sp = source_spec[i]
+    plt.figure(figsize=[15, 5])
+
+    plt.title("Spectral query, spectral retrieval (sp_sp)")
+    plt.ylim(-0, 20)
+    for j in range(3):
+        plt.plot(
+            l,
+            results["spectra_sp_sp"][n][j],
+            color="grey",
+            alpha=0.5,
+            label="Retrieved",
+        )
+    plt.plot(l, query_sp, color="blue", alpha=0.2, label="Query")
+    plt.legend()
+    plt.show()
+
+
+# spectra im_im
+for n, i in enumerate(ind_queries):
+    query_sp = source_spec[i]
+    plt.figure(figsize=[15, 5])
+
+    plt.title("Image query, image retrieval (im_im)")
+    plt.ylim(-0, 20)
+    for j in range(3):
+        plt.plot(
+            l,
+            results["spectra_im_im"][n][j],
+            color="grey",
+            alpha=0.5,
+            label="Retrieved",
+        )
+    plt.plot(l, query_sp, color="blue", alpha=0.2, label="Query")
+    plt.legend()
+    plt.show()
+
+
+# spectra sp_im
+for n, i in enumerate(ind_queries):
+    query_sp = source_spec[i]
+    plt.figure(figsize=[15, 5])
+
+    plt.title("Spectral query, image retrieval (sp_im)")
+    plt.ylim(-0, 20)
+    for j in range(3):
+        plt.plot(
+            l,
+            results["spectra_sp_im"][n][j],
+            color="grey",
+            alpha=0.5,
+            label="Retrieved",
+        )
+    plt.plot(l, query_sp, color="blue", alpha=0.2, label="Query")
+    plt.legend()
+    plt.show()
+
+
+# spectra im_sp
+for n, i in enumerate(ind_queries):
+    query_sp = source_spec[i]
+    plt.figure(figsize=[15, 5])
+
+    plt.title("Image query, spectral retrieval (im_sp)")
+    plt.ylim(-0, 20)
+    for j in range(3):
+        plt.plot(
+            l,
+            results["spectra_im_sp"][n][j],
+            color="grey",
+            alpha=0.5,
+            label="Retrieved",
+        )
+    plt.plot(l, query_sp, color="blue", alpha=0.2, label="Query")
+    plt.legend()
+    plt.show()
+
 
 # %% visualise the embeddings
 from sklearn.decomposition import PCA
@@ -169,8 +365,8 @@ from matplotlib.pyplot import plot, ylim, title, legend
 
 im_pca = PCA(n_components=4).fit_transform(image_features)
 sp_pca = PCA(n_components=4).fit_transform(spectra_features)
-scatter_plot_as_images(im_pca, images, nx=30, ny=30)
-scatter_plot_as_images(sp_pca, images, nx=30, ny=30)
+scatter_plot_as_images(im_pca, source_images, nx=30, ny=30)
+scatter_plot_as_images(sp_pca, source_images, nx=30, ny=30)
 
 
 # %% Nearest Neighbour retrieval
@@ -185,7 +381,7 @@ crop = CenterCrop(96)
 
 plt.figure(figsize=[15, 4])
 plt.subplot(121)
-plt.imshow(crop(torch.tensor(images[ind_query]).T).T)
+plt.imshow(crop(torch.tensor(source_images[ind_query]).T).T)
 plt.title("Queried Image")
 plt.subplot(122)
 plt.plot(l, source_spec[ind_query], color="red", alpha=0.5)
@@ -197,7 +393,7 @@ print("Query with spectral similarity:")
 for i in range(4):
     plt.figure(figsize=[15, 4])
     plt.subplot(121)
-    plt.imshow(crop(torch.tensor(images[inds[i]]).T).T)
+    plt.imshow(crop(torch.tensor(source_images[inds[i]]).T).T)
     if i == 0:
         plt.title("Retrieved Image")
     plt.subplot(122)
@@ -216,7 +412,7 @@ inds = np.argsort(image_similarity)[::-1]
 for i in range(4):
     plt.figure(figsize=[15, 4])
     plt.subplot(121)
-    plt.imshow(crop(torch.tensor(images[inds[i]]).T).T)
+    plt.imshow(crop(torch.tensor(source_images[inds[i]]).T).T)
     if i == 0:
         plt.title("Retrieved Image")
     plt.subplot(122)
@@ -235,7 +431,7 @@ inds = np.argsort(cross_image_similarity)[::-1]
 for i in range(4):
     plt.figure(figsize=[15, 4])
     plt.subplot(121)
-    plt.imshow(crop(torch.tensor(images[inds[i]]).T).T)
+    plt.imshow(crop(torch.tensor(source_images[inds[i]]).T).T)
     if i == 0:
         plt.title("Retrieved Image")
     plt.subplot(122)
@@ -254,7 +450,7 @@ inds = np.argsort(cross_spectral_similarity)[::-1]
 for i in range(4):
     plt.figure(figsize=[15, 4])
     plt.subplot(121)
-    plt.imshow(crop(torch.tensor(images[inds[i]]).T).T)
+    plt.imshow(crop(torch.tensor(source_images[inds[i]]).T).T)
     if i == 0:
         plt.title("Retrieved Image")
     plt.subplot(122)
@@ -292,23 +488,26 @@ from sklearn.neighbors import KNeighborsRegressor
 import seaborn as sns
 from sklearn.metrics import r2_score
 
-neigh = KNeighborsRegressor(weights="distance", n_neighbors=16)
-neigh.fit(image_features[:-5000], redshifts[:-5000])
-preds = neigh.predict(image_features[-5000:])
+print("Zero shot redshift prediction from image features")
+
+neigh = KNeighborsRegressor(weights="distance", n_neighbors=50)
+neigh.fit(image_features[:-3000], redshifts[:-3000])
+preds = neigh.predict(image_features[-3000:])
 
 
-sns.scatterplot(x=redshifts[-5000:], y=preds, s=5, color=".15")
-sns.histplot(x=redshifts[-5000:], y=preds, bins=64, pthresh=0.1, cmap="mako")
-sns.kdeplot(x=redshifts[-5000:], y=preds, levels=5, color="w", linewidths=1)
+sns.scatterplot(x=redshifts[-3000:], y=preds, s=5, color=".15")
+sns.histplot(x=redshifts[-3000:], y=preds, bins=64, pthresh=0.1, cmap="mako")
+sns.kdeplot(x=redshifts[-3000:], y=preds, levels=5, color="w", linewidths=1)
 plt.xlabel("True redshift")
 plt.ylabel("Predicted redshift")
 plt.plot([0, 1], [0, 1], color="grey", linestyle="--")
+plt.title("Zero-shot redshift prediction from image features")
 plt.xlim(0, 0.65)
 plt.ylim(0, 0.65)
 plt.text(
     0.05,
     0.55,
-    "$R^2$ score: %0.2f" % (r2_score(redshifts[-5000:], preds)),
+    "$R^2$ score: %0.2f" % (r2_score(redshifts[-3000:], preds)),
     fontsize="large",
 )
 # %% from spectra
@@ -320,6 +519,7 @@ sns.histplot(x=redshifts[-5000:], y=preds, bins=64, pthresh=0.1, cmap="mako")
 sns.kdeplot(x=redshifts[-5000:], y=preds, levels=5, color="w", linewidths=1)
 plt.xlabel("True redshift")
 plt.ylabel("Predicted redshift")
+plt.title("Zero-shot redshift prediction from spectra")
 plt.plot([0, 1], [0, 1], color="grey", linestyle="--")
 plt.xlim(0, 0.65)
 plt.ylim(0, 0.65)
