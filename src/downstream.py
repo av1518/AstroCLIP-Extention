@@ -30,9 +30,10 @@ print("imports done")
 # %%
 CACHE_DIR = "C:\datasets_astroclip"
 dataset = load_dataset("src/datasets_files/legacy_survey.py", cache_dir=CACHE_DIR)
-dataset.set_format(type="torch", columns=["image", "spectrum", "redshift"])
+dataset.set_format(type="torch", columns=["image", "spectrum", "redshift", "targetid"])
 
 testdata = DataLoader(dataset["test"], batch_size=512, shuffle=False, num_workers=0)
+
 # %%
 import sys
 
@@ -71,9 +72,11 @@ source_images = []
 redshifts = []
 spectra = []
 source_spec = []
+targetid = []
 
 count = 0
 for batch in tqdm(testdata):
+    targetid.append(batch["targetid"])
     source_spec.append(batch["spectrum"])
     redshifts.append(batch["redshift"])
     im_embeddings.append(
@@ -111,25 +114,28 @@ spectra = np.concatenate(spectra, axis=0)
 im_embeddings = np.concatenate(im_embeddings, axis=0)
 redshifts = np.concatenate(redshifts, axis=0)
 source_spec = np.concatenate(source_spec, axis=0)
+targetids = np.concatenate(targetid, axis=0)
 
 print(source_images.shape, im_embeddings.shape, redshifts.shape)
 # %%
 np.savez(
-    "data/embeddings-alt1.npz",
+    "data/embeddings-main.npz",
     images=source_images,
     im_embeddings=im_embeddings,
     spectra=spectra,
     redshifts=redshifts,
     source_spec=source_spec,
+    targetid=targetids,
 )
 # %%
 # Load the embeddings
-emb = np.load("data/embeddings-alt1.npz")
+emb = np.load("data/embeddings-main.npz")
 source_images = emb["images"]
 im_embeddings = emb["im_embeddings"]
 spectra = emb["spectra"]
 redshifts = emb["redshifts"]
 source_spec = emb["source_spec"]
+targetid = emb["targetid"]
 # %%
 import torch.nn.functional as F
 
@@ -370,6 +376,7 @@ scatter_plot_as_images(sp_pca, source_images, nx=30, ny=30)
 
 
 # %% Nearest Neighbour retrieval
+"""
 ind_query = 4
 
 spectral_similarity = spectra_features[ind_query] @ spectra_features.T
@@ -462,42 +469,28 @@ for i in range(4):
         plt.title("Retrieved Spectrum")
 
     plt.legend()
+"""
 
-# %%
-# from astropy.table import Table, join
-
-# import h5py
-
-# # Open the HDF5 file
-# file_path = 'C:\datasets_astroclip\lgal_fsps.mocha.v1.3.hdf5'
-# hdf5_file = h5py.File(file_path, 'r')
-
-# # Function to recursively print all groups and datasets
-# def print_hdf5_structure(name, obj):
-#     print(name)
-
-# # Print the structure of the HDF5 file
-# hdf5_file.visititems(print_hdf5_structure)
-
-# # Close the file
-# hdf5_file.close()
-
-# # provabgs = Table.read("C:\datasets_astroclip\lgal_fsps.mocha.v1.3.hdf5")
 # %% Zero shot redshift prediction
+import warnings
+
+warnings.filterwarnings("ignore", category=FutureWarning, module="seaborn")
 from sklearn.neighbors import KNeighborsRegressor
 import seaborn as sns
 from sklearn.metrics import r2_score
 
 print("Zero shot redshift prediction from image features")
 
-neigh = KNeighborsRegressor(weights="distance", n_neighbors=50)
-neigh.fit(image_features[:-3000], redshifts[:-3000])
-preds = neigh.predict(image_features[-3000:])
+split = 5000
+
+neigh = KNeighborsRegressor(weights="distance", n_neighbors=16)
+neigh.fit(image_features[:-split], redshifts[:-split])
+preds = neigh.predict(image_features[-split:])
 
 
-sns.scatterplot(x=redshifts[-3000:], y=preds, s=5, color=".15")
-sns.histplot(x=redshifts[-3000:], y=preds, bins=64, pthresh=0.1, cmap="mako")
-sns.kdeplot(x=redshifts[-3000:], y=preds, levels=5, color="w", linewidths=1)
+sns.scatterplot(x=redshifts[-split:], y=preds, s=5, color=".15")
+sns.histplot(x=redshifts[-split:], y=preds, bins=64, pthresh=0.1, cmap="mako")
+sns.kdeplot(x=redshifts[-split:], y=preds, levels=5, color="w", linewidths=1)
 plt.xlabel("True redshift")
 plt.ylabel("Predicted redshift")
 plt.plot([0, 1], [0, 1], color="grey", linestyle="--")
@@ -507,16 +500,19 @@ plt.ylim(0, 0.65)
 plt.text(
     0.05,
     0.55,
-    "$R^2$ score: %0.2f" % (r2_score(redshifts[-3000:], preds)),
+    "$R^2$ score: %0.2f" % (r2_score(redshifts[-split:], preds)),
     fontsize="large",
 )
 # %% from spectra
+
+split = 5000
+
 neigh = KNeighborsRegressor(weights="distance", n_neighbors=16)
-neigh.fit(spectra[:-5000], redshifts[:-5000])
-preds = neigh.predict(spectra[-5000:])
-sns.scatterplot(x=redshifts[-5000:], y=preds, s=5, color=".15")
-sns.histplot(x=redshifts[-5000:], y=preds, bins=64, pthresh=0.1, cmap="mako")
-sns.kdeplot(x=redshifts[-5000:], y=preds, levels=5, color="w", linewidths=1)
+neigh.fit(spectra[:-split], redshifts[:-split])
+preds = neigh.predict(spectra[-split:])
+sns.scatterplot(x=redshifts[-split:], y=preds, s=5, color=".15")
+sns.histplot(x=redshifts[-split:], y=preds, bins=64, pthresh=0.1, cmap="mako")
+sns.kdeplot(x=redshifts[-split:], y=preds, levels=5, color="w", linewidths=1)
 plt.xlabel("True redshift")
 plt.ylabel("Predicted redshift")
 plt.title("Zero-shot redshift prediction from spectra")
@@ -526,8 +522,246 @@ plt.ylim(0, 0.65)
 plt.text(
     0.05,
     0.55,
-    "$R^2$ score: %0.2f" % (r2_score(redshifts[-5000:], preds)),
+    "$R^2$ score: %0.2f" % (r2_score(redshifts[-split:], preds)),
     fontsize="large",
 )
 
+# %% Stellar mass zero shot prediction
+from astropy.table import Table, join
+
+provabgs = Table.read("C:\datasets_astroclip\BGS_ANY_full.provabgs.sv3.v0.hdf5")
+
+# join the provabgs table using the targetid
+embedding_table = Table(
+    {
+        "targetid": targetid,
+        "image_embedding": im_embeddings,
+        "spectrum_embedding": spectra,
+    }
+)
+provabgs = join(provabgs, embedding_table, keys_left="TARGETID", keys_right="targetid")
+
+# remove invalid values
+provabgs = provabgs[
+    (provabgs["PROVABGS_LOGMSTAR_BF"] > 0)
+    * (provabgs["MAG_G"] > 0)
+    * (provabgs["MAG_R"] > 0)
+    * (provabgs["MAG_Z"] > 0)
+]
+
+
+# set random seed
+np.random.seed(25101999)
+# randomise the order
+provabgs = provabgs[np.random.permutation(len(provabgs))]
+# %%
+print(len(provabgs))
+# %% Stellar mass zero shot prediction from image embeddings
+
+split = 5000
+
+
+neigh = KNeighborsRegressor(weights="distance", n_neighbors=16)
+neigh.fit(
+    provabgs["image_embedding"][:-split], provabgs["PROVABGS_LOGMSTAR_BF"][:-split]
+)
+preds = neigh.predict(provabgs["image_embedding"][-split:])
+sns.scatterplot(x=provabgs["PROVABGS_LOGMSTAR_BF"][-split:], y=preds, s=5, color=".15")
+sns.histplot(
+    x=np.clip(provabgs["PROVABGS_LOGMSTAR_BF"][-split:], 8, 12),
+    y=np.clip(preds, 8, 12),
+    bins=64,
+    pthresh=0.1,
+    cmap="mako",
+)
+sns.kdeplot(
+    x=provabgs["PROVABGS_LOGMSTAR_BF"][-split:],
+    y=preds,
+    levels=5,
+    color="w",
+    linewidths=1,
+)
+plt.xlabel("True log stellar mass")
+plt.ylabel("Predicted log stellar mass")
+plt.title("Stellar mass pred with image embeddings")
+plt.plot([8, 12], [8, 12], color="grey", linestyle="--")
+plt.xlim(8, 12.5)
+plt.ylim(8, 12.5)
+plt.text(
+    8.5,
+    11.5,
+    "$R^2$ score: %0.2f" % (r2_score(provabgs["PROVABGS_LOGMSTAR_BF"][-split:], preds)),
+    fontsize="large",
+)
+
+# %% Stellar mass zero shot prediction from spectra
+split = 5000
+
+neigh = KNeighborsRegressor(weights="distance", n_neighbors=16)
+neigh.fit(
+    provabgs["spectrum_embedding"][:-split], provabgs["PROVABGS_LOGMSTAR_BF"][:-split]
+)
+preds = neigh.predict(provabgs["spectrum_embedding"][-split:])
+sns.scatterplot(x=provabgs["PROVABGS_LOGMSTAR_BF"][-split:], y=preds, s=5, color=".15")
+sns.histplot(
+    x=np.clip(provabgs["PROVABGS_LOGMSTAR_BF"][-split:], 8, 12),
+    y=np.clip(preds, 8, 12),
+    bins=64,
+    pthresh=0.1,
+    cmap="mako",
+)
+sns.kdeplot(
+    x=provabgs["PROVABGS_LOGMSTAR_BF"][-split:],
+    y=preds,
+    levels=5,
+    color="w",
+    linewidths=1,
+)
+plt.xlabel("True log stellar mass")
+plt.ylabel("Predicted log stellar mass")
+plt.title("Stellar mass pred with spectrum embeddings")
+plt.plot([8, 12], [8, 12], color="grey", linestyle="--")
+plt.xlim(8, 12.5)
+plt.ylim(8, 12.5)
+
+plt.text(
+    8.5,
+    11.5,
+    "$R^2$ score: %0.2f" % (r2_score(provabgs["PROVABGS_LOGMSTAR_BF"][-split:], preds)),
+    fontsize="large",
+)
+
+# %% Cross-modal similarity
+split = 5000
+neigh = KNeighborsRegressor(weights="distance", n_neighbors=16)
+neigh.fit(
+    provabgs["spectrum_embedding"][:-split], provabgs["PROVABGS_LOGMSTAR_BF"][:-split]
+)
+preds = neigh.predict(provabgs["image_embedding"][-split:])
+sns.scatterplot(x=provabgs["PROVABGS_LOGMSTAR_BF"][-split:], y=preds, s=5, color=".15")
+sns.histplot(
+    x=np.clip(provabgs["PROVABGS_LOGMSTAR_BF"][-split:], 8, 12),
+    y=np.clip(preds, 8, 12),
+    bins=64,
+    pthresh=0.1,
+    cmap="mako",
+)
+sns.kdeplot(
+    x=provabgs["PROVABGS_LOGMSTAR_BF"][-split:],
+    y=preds,
+    levels=5,
+    color="w",
+    linewidths=1,
+)
+plt.xlabel("True log stellar mass")
+plt.ylabel("Predicted log stellar mass")
+plt.title("Stellar mass pred cross-modal (spectrum regression, prediction with image)")
+plt.plot([8, 12], [8, 12], color="grey", linestyle="--")
+plt.xlim(8, 12.5)
+plt.ylim(8, 12.5)
+plt.text(
+    8.5,
+    11.5,
+    "$R^2$ score: %0.2f" % (r2_score(provabgs["PROVABGS_LOGMSTAR_BF"][-split:], preds)),
+    fontsize="large",
+)
+
+# %% Redshift prediction from images
+split = 5000
+neigh = KNeighborsRegressor(weights="distance", n_neighbors=16)
+neigh.fit(provabgs["image_embedding"][:-split], provabgs["Z_HP"][:-split])
+preds = neigh.predict(provabgs["image_embedding"][-split:])
+sns.scatterplot(x=provabgs["Z_HP"][-split:], y=preds, s=5, color=".15")
+sns.histplot(
+    x=np.clip(provabgs["Z_HP"][-split:], 0, 0.65),
+    y=np.clip(preds, 0, 0.65),
+    bins=64,
+    pthresh=0.1,
+    cmap="mako",
+)
+sns.kdeplot(
+    x=provabgs["Z_HP"][-split:],
+    y=preds,
+    levels=5,
+    color="w",
+    linewidths=1,
+)
+plt.xlabel("True redshift")
+plt.ylabel("Predicted redshift")
+plt.title("Redshift pred with image embeddings")
+plt.plot([0, 0.65], [0, 0.65], color="grey", linestyle="--")
+# plt.xlim(0, 0.65)
+# plt.ylim(0, 0.65)
+plt.text(
+    0.05,
+    0.55,
+    "$R^2$ score: %0.2f" % (r2_score(provabgs["Z_HP"][-split:], preds)),
+    fontsize="large",
+)
+# %% Redshift prediction from spectra
+split = 5000
+neigh = KNeighborsRegressor(weights="distance", n_neighbors=16)
+neigh.fit(provabgs["spectrum_embedding"][:-split], provabgs["Z_HP"][:-split])
+preds = neigh.predict(provabgs["spectrum_embedding"][-split:])
+sns.scatterplot(x=provabgs["Z_HP"][-split:], y=preds, s=5, color=".15")
+sns.histplot(
+    x=np.clip(provabgs["Z_HP"][-split:], 0, 0.65),
+    y=np.clip(preds, 0, 0.65),
+    bins=64,
+    pthresh=0.1,
+    cmap="mako",
+)
+sns.kdeplot(
+    x=provabgs["Z_HP"][-split:],
+    y=preds,
+    levels=5,
+    color="w",
+    linewidths=1,
+)
+plt.xlabel("True redshift")
+plt.ylabel("Predicted redshift")
+plt.title("Redshift pred with spectrum embeddings")
+plt.plot([0, 0.65], [0, 0.65], color="grey", linestyle="--")
+# plt.xlim(0, 0.65)
+# plt.ylim(0, 0.65)
+
+plt.text(
+    0.05,
+    0.55,
+    "$R^2$ score: %0.2f" % (r2_score(provabgs["Z_HP"][-split:], preds)),
+    fontsize="large",
+)
+# %% Cross-modal redshift prediction
+split = 5000
+neigh = KNeighborsRegressor(weights="distance", n_neighbors=16)
+neigh.fit(provabgs["spectrum_embedding"][:-split], provabgs["Z_HP"][:-split])
+preds = neigh.predict(provabgs["image_embedding"][-split:])
+sns.scatterplot(x=provabgs["Z_HP"][-split:], y=preds, s=5, color=".15")
+sns.histplot(
+    x=np.clip(provabgs["Z_HP"][-split:], 0, 0.65),
+    y=np.clip(preds, 0, 0.65),
+    bins=64,
+    pthresh=0.1,
+    cmap="mako",
+)
+sns.kdeplot(
+    x=provabgs["Z_HP"][-split:],
+    y=preds,
+    levels=5,
+    color="w",
+    linewidths=1,
+)
+plt.xlabel("True redshift")
+plt.ylabel("Predicted redshift")
+plt.title("Redshift pred cross-modal (spectrum regression, prediction with image)")
+plt.plot([0, 0.65], [0, 0.65], color="grey", linestyle="--")
+# plt.xlim(0, 0.65)
+# plt.ylim(0, 0.65)
+
+plt.text(
+    0.05,
+    0.55,
+    "$R^2$ score: %0.2f" % (r2_score(provabgs["Z_HP"][-split:], preds)),
+    fontsize="large",
+)
 # %%
