@@ -1,30 +1,24 @@
 # %% Use trained AstroCLIP model to embed entire dataset
 from tqdm import tqdm
-import lightning as L
-from lightning.pytorch.callbacks import ModelCheckpoint
 import torch
 from datasets import load_dataset
 from pl_bolts.models.self_supervised import Moco_v2
 import torch.nn.functional as F
-import torch.optim.lr_scheduler as lr_scheduler
-from src.models import OutputExtractor, ExtendedSpender, AstroCLIP, AlternateSpender
-from torch.utils.data import Subset, DataLoader
+from src.models import OutputExtractor, AstroCLIP, AlternateSpender
+from torch.utils.data import DataLoader
 from torchvision.transforms import (
     Compose,
     RandomVerticalFlip,
     RandomHorizontalFlip,
     RandomRotation,
-    RandomErasing,
-    ToTensor,
     CenterCrop,
-    ToPILImage,
     InterpolationMode,
 )
-from pytorch_lightning.loggers import WandbLogger
 import numpy as np
 from src.utils import dr2_rgb
 
 import matplotlib.pyplot as plt
+from scipy.ndimage import gaussian_filter1d as gf
 
 print("imports done")
 # %%
@@ -34,7 +28,7 @@ dataset.set_format(type="torch", columns=["image", "spectrum", "redshift", "targ
 
 testdata = DataLoader(dataset["test"], batch_size=512, shuffle=False, num_workers=0)
 
-# %%
+# %% Script to embed the entire dataset
 import sys
 
 sys.path.append(
@@ -104,10 +98,6 @@ for batch in tqdm(testdata):
     stacked_images = np.stack(processed_images, axis=0)
     source_images.append(stacked_images)
 
-    # count += 1
-    # if count == 3:
-    #     break
-
 # %%
 source_images = np.concatenate(source_images, axis=0)
 spectra = np.concatenate(spectra, axis=0)
@@ -137,7 +127,6 @@ redshifts = emb["redshifts"]
 source_spec = emb["source_spec"]
 targetid = emb["targetid"]
 # %%
-import torch.nn.functional as F
 
 l = np.linspace(3586.7408577, 10372.89543574, len(source_spec[0]))
 ind_query = 12
@@ -146,9 +135,16 @@ plt.subplot(1, 2, 1)
 plt.imshow(source_images[ind_query])
 plt.axis("off")
 plt.subplot(1, 2, 2)
-plt.plot(l, source_spec[ind_query], color="grey", alpha=0.5)
+plt.plot(l, source_spec[ind_query], color="grey", alpha=0.5, label="Raw Spectrum")
+plt.plot(
+    l,
+    gf(source_spec[ind_query][:, 0], 2),
+    color="red",
+    alpha=0.5,
+    label="1D Gaussian Filter Spectrum",
+)
 plt.title("Example query galaxy spectrum")
-
+plt.legend()
 # normalise the embedding by diving by the L2 norm
 # image_features = im_embeddings / np.linalg.norm(im_embeddings, axis=-1, keepdims=True)
 # spectra_features = spectra / np.linalg.norm(spectra, axis=-1, keepdims=True)
@@ -171,9 +167,6 @@ for i in range(8):
 plt.subplots_adjust(wspace=0.01, hspace=0.01)
 
 # %%
-
-import numpy as np
-
 ind_queries = [4, 12, 29, 23]
 results = {
     "images_sp_sp": [],  # Spectral query, spectral retrieval (sp_sim)
