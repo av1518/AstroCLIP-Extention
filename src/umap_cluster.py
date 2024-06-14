@@ -436,8 +436,6 @@ def plot_histograms(provabgs, cluster_indices_dict, bin_count=50):
     plt.show()
 
 
-# Example of how to use this function:
-# Assume we want to plot for clusters 0 and 1 in kmeans_cluster_sp
 cluster_numbers = [0, 1, 2, 3, 4, 5]
 cluster_indices_dict = {
     num: np.where(provabgs["kmeans_cluster_sp"] == num)[0] for num in cluster_numbers
@@ -517,14 +515,11 @@ def plot_histograms_by_cluster(provabgs, cluster_indices_dict, bin_count=30):
     plt.show()
 
 
-# Example of how to use this function:
-# Assume we want to plot for clusters 0, 1, and 2 in kmeans_cluster_sp
 cluster_numbers = [0, 1, 2, 4, 5]
 cluster_indices_dict = {
     num: np.where(provabgs["kmeans_cluster_sp"] == num)[0] for num in cluster_numbers
 }
 
-# Call the function with the dictionary of cluster indices
 plot_histograms_by_cluster(provabgs, cluster_indices_dict)
 
 # %%
@@ -574,8 +569,6 @@ def plot_boxplots_by_cluster(provabgs, cluster_indices_dict):
     plt.show()
 
 
-# Example of how to use this function:
-# Assume we want to plot for clusters 0, 1, and 2 in kmeans_cluster_sp
 cluster_numbers = [0, 1, 2, 3, 4, 5]
 cluster_indices_dict = {
     num: np.where(provabgs["kmeans_cluster_sp"] == num)[0] for num in cluster_numbers
