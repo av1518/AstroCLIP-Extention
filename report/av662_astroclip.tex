@@ -1,0 +1,86 @@
+\documentclass[a4paper,12pt]{article}
+
+% List of packages and custom commands/environments
+\usepackage{amsmath,amssymb,amscd}
+\usepackage[hidelinks]{hyperref}
+\usepackage{dirtree}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage{comment}
+\usepackage{mathtools}
+\usepackage{amsmath}
+\usepackage{braket}
+%\usepackage[inline]{showlabels}
+\usepackage{adjustbox}
+\usepackage{caption}
+\usepackage{subcaption}
+\captionsetup{font=footnotesize}
+\usepackage[a4paper,margin=2cm, marginparwidth=2cm]{geometry}
+\usepackage{float}
+\providecommand{\href}[2]{\code{#2}}
+\providecommand{\url}[1]{\code{#1}}
+\usepackage{bm}
+\usepackage[a4paper,margin=2cm, marginparwidth=2cm]{geometry}
+
+
+
+\newcommand{\code}[1]{\mbox{%
+        \ttfamily
+        \tikz \node[anchor=base,fill=black!12]{#1};%
+    }}
+
+    \begin{document}
+    \pagenumbering{arabic}
+    \newgeometry{left = 1.75cm, right = 1.75cm, top = 1.75cm, bottom = 2cm}
+    
+    \vspace*{3cm}
+    
+    \begin{center}
+     {\Large MPhil Data Intensive Science}  \\ [3pt]
+     {\Large University of Cambridge}  \\ [3pt]
+     
+     \vspace*{1cm}
+     \hrulefill
+     \vspace*{0.75cm}
+     
+     {\LARGE \textbf{AstroCLIP: Cross-Modal Pre-training for Astronomical Foundation Models}} \\ [6pt]
+     \large \textbf{Data Analysis Project} \\ [6pt]
+     \vspace*{0.05cm}
+     \hrulefill
+     \vspace*{1.5cm}
+
+     % Add the university logo here
+    \includegraphics[width=0.3\textwidth]{../figures/University_Crest.pdf} 
+
+    \vspace*{1.5cm}
+     
+     {\Large  Andreas Vrikkis} \\ [6pt]
+     {\large  December 14, 2023} \\ [3pt]
+     {\large  \LaTeX \hspace{0.03cm} Word count: 2825 } \\ [3pt]
+     
+     \end{center}   
+    
+    
+    \newpage
+    
+    \restoregeometry
+    
+    \newpage
+    
+    \tableofcontents
+    
+    \newpage
+\section{Introduction}
+
+\section{Method/Implementation}
+\subsection{Constrastive Learning}
+
+
+
+% \newpage
+% \bibliographystyle{unsrt}
+% \bibliography{references.bib}
+
+\end{document}

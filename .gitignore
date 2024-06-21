@@ -8,3 +8,7 @@ wandb/
 astroclip/
 
 model_checkpoints/*
+
+report/*
+!report/av662_astroclip.pdf
+!report/av662_astroclip.tex
