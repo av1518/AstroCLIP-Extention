@@ -74,13 +74,114 @@
     \newpage
 \section{Introduction}
 
-\section{Method/Implementation}
-\subsection{Constrastive Learning}
+\section{Method/Background/Theory}
+\subsection{Foundational Models}
+\subsection{Self-Supervised Learning}
+When labelled training data are scarce, other datasets can be exploited to improve performance. In \emph{transfer learning} a model is first pre-trained to perform a related secondary task for which we have (potentially labelled) data \cite{udl}. The resulting network is then adapted to the primary task of interest. This is typically done by removing the final layer(s) of the network and adding new layers (heads) that produce the desired output. Further training is then performed on the primary task. The pre-trained part of the network can be frozen (i.e. its weights are not updated during training) or it can be fine-tuned. 
+
+The key principle behind this approach is that the pre-trained model has built a good internal representation of the data from the secondary task, which can be useful for the primary task. It can also be seen as a form of sensible weight initialisation for most of the final network.
+
+For transfer learning to be effective, the secondary task should contain a large amount of data. In many cases, however, labelled data are scarce or expensive to obtain. In self-supervised learning (SSL), a model is trained on a pretext task where the labels are generated from the data itself. In the process, the model learns to extract rich, low-dimensional representations from data without the need for human labelling. The pretext task is often chosen to be an artificial surrogate task on the input data. Recently, numerous such tasks have been developed, including autoregressive prediction of the next word in a sequence \cite{radford2019language}, masked language modelling \cite{devlin2018bert} and contrastive learning \cite{radford2021learning}. These techniques have shown success in generating versatile and informative representations across NLP and computer vision.
 
 
 
-% \newpage
-% \bibliographystyle{unsrt}
-% \bibliography{references.bib}
+
+\subsection{Cross-modal Constrastive Learning}
+Constastive learning is a self-supervised learning technique.
+The key concept behind our training objective is that different observational modalities represent correlated transformations of the same underlying physical object, forming a positive pair. By modality we refer to the type of data input such as iamges, text, etc. each requring a different processing technique. This is an extension of the single-modal contrastive learning framework such as SimCLR [cite], which employs stochastic data augmentation to create two views from the underlying image. Instead, we begin with two different modalities in different spaces and map them to a common embedding space, similar to the cross-modal framework connecting language and images in Ref.\cite{crossCLIP}. Under the constrastive loss function, each positive pair is projected together in the embedding space, while negative pairs are pushed apart.  
+
+The cross-modal contrastive learning framework is illustrated in Fig.\ref{fig:contrastive_learning}. Here, $\mathbf{x}_i \in \mathbb{R}^N$ and $\mathbf{y}_i \in \mathbb{R}^M$ are two modalities of the same underlying object. These are passed through a pair of encoder networks $f_{\mathbf{\theta}}: \mathbb{R^N} \rightarrow \mathbb{R^D}$ and $g_{\mathbf{\phi}}: \mathbb{R^M} \rightarrow \mathbb{R^D}$, with $\mathbf{\theta}, \mathbf{\phi}$ trainable parameters, which extract representation vectors in the shared embedding space where contrastive loss is applied. These are denoted as $\mathbf{z}^x_i \in \mathbb{R}^D$ and $\mathbf{z}^y_i \in \mathbb{R}^D$, where $D$ is the dimensionality of the embedding space and the superscripts $x$ and $y$ denote the originator modality. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../figures/contrastive_learning.pdf}
+    \caption{Cross-modal contrastive learning framework. An underlying physical object is observed in two different modalities, $\mathbf{x}_i \in \mathbb{R^N}$ and $\mathbf{y}_i \in \mathbb{R^M}$. An augmented version of each modality undergoes a transformation $\mathcal{T}, \mathcal{T}'$ and are passed through encoder networks $f_{\theta}, g_{\phi}$ which compress them into representations $\mathbf{z}^x_i, \mathbf{z}^y_i$ in a shared embedding space. The constrastive loss (InfoNCE) is applied to these representations along with the negative pair denoted by $j$, with the gradients backpropagated to update the encoder networks (appended with projection heads).}
+    \label{fig:contrastive_learning}
+\end{figure}
+
+
+We want this embedding space to maximise the mutual information $I(f_{\theta}(\mathbf{x}),g_\phi{\mathbf{y}})$ between these two representations. However, calculating the mutual information directly is intractable for finite data \cite{mutualinfolimitation}. Instead, we approximate each modality as a noisy transformation of the same underlying object and use an Information Noise-Contrastive Estimation (InfoNCE) loss function \cite{infonce} which maximises a variational bound on the mutual information. The InfoNCE loss is defined as:
+
+\begin{equation}
+    \mathcal{L}_{\text{InfoNCE}}(\mathbf{z}^x, \mathbf{z}^y, \tau) = -\frac{1}{K} \sum_{i=1}^{K} \log \frac{\exp\left(S_C(\mathbf{z}^x_i, \mathbf{z}^y_i)/\tau\right)}{\sum_{j}^{K} \exp\left(S_C(\mathbf{z}^x_i, \mathbf{z}^y_j)/\tau\right)}
+\end{equation}
+where $\mathbf{z}^x_i=f(\mathbf{x}_i)$ and $\mathbf{z}^y_i=g(\mathbf{y}_i)$, $\tau > 0$ denotes a smoothing parameter (referred to as temperature) , $S_C(\mathbf{z}^x_i, \mathbf{z}^y_i)$ is a similarity metric between the two representations, and $j$ represent the indices of negative examples (i.e representations of different objects to object $i$). For the similarity metric in CLIP, we use the cosine similarity between the two representations in the embedding space given by:
+\begin{equation}
+    S_C(\mathbf{z}^x_i, \mathbf{z}^y_j) = \frac{(\mathbf{z}^x_i)^T \mathbf{z}^y_j}{\|\mathbf{z}^x_i\|^2 \|\mathbf{z}^y_j\|^2}.
+\end{equation}
+InfoNCE is biased, but it represents a stable, low variance bound on the mutual information that is widely used in constrastive methods \cite{crossCLIP}. Under InfoNCE, points in the embedding space that correspond to the same object are pulled together, while points that correspod to different objects are pushed apart.
+
+Training cross-modal models from scratch under CLIP loss on cross-modal problems has been shown to often underperform compared to single-modal problems. However, the addition of pre-trained single modal models as initialisation can significantly improve performance. This is the approach taken in this project, where only an additional projection head is trained on top of the pre-trained models.
+
+
+
+\subsection{Embedding Space}
+The low-dimensional, rich representations of the data in the shared embedding space can then be used for a variety of downstream tasks. It has been shown in various contexts that despite the contrived training objective, the embedding space can capture a significant amount of semantic information that often outperform supervised training on zero-shot and few-shot learning tasks. Recall that during constrastive training, the embedding space structures itself such that semantically similar objects are close together, while semantically dissimilar objects are far apart. 
+This means that the positions of the representations in the embedding space can be used to infer semantic relationships between the objects and can be used for downstream tasks. A typical way of visualising the embedding space is to project the representations to a 2D space using dimensionality reduction techniques. 
+
+UMAP (Uniform Manifold Approximation and Projection) is a dimensionality reduction technique that aims to preserve the global structure and local relationships of data when mapping high-dimensional data to a lower-dimensional space \cite{UMAP}. UMAP constructs a high-dimensional graph representation of the data, which it then optimises to create a low-dimensional projection that maintains as much of the original data's structure as possible. 
+
+As the embedding space structure is informed by the contrastive loss, the arrangment of the representations holds semantic information. Island structures in the embedding space can be interpreted as clusters of semantically similar objects, while the distance between islands can be used to infer semantic relationships between the clusters.
+
+
+\section{Implementation}
+In AstroCLIP, we consider two modalities of galaxies: images and spectra. In essence, we approach the two modalities as filtered, noisy views of the same underlying galaxy. This implies that they should possess a shared latent space in which the embeddings of these cross-modal representations are aligned. To obtain these embeddings, we deploy a pair of models to encode the images and spectra. This is done in a two-step process:
+\begin{enumerate}
+    \item We utilise two pre-trained single-modal models, one for images and one for spectra, which were pre-trained using SSL. For the pretrained image embedder, we use a galaxy image encoder from Stein et. al (see Ref.\cite{stein}), which is based on MoCo v2 \cite{mocov2}. For galaxy spectra, we utilise the encoder part from the Spender model \cite{spender}.
+    \item We append a simple Multilayer Perceptron (MLP) projection head to each of the pre-trained models to compress the representations into a shared $d=128$-dimensional embedding space. We then train (or fine-tune) these projection heads under constrastive learning to align the embedded representations of the two modalities under shared semantics.
+\end{enumerate}
+We keep the pre-train single-modal models frozen during training, only updating the projection heads, instead of training the entire model from scratch. This is to align with the previous studies that show that pre-training the single-modal models significantly improves performance in cross-modal tasks \cite{crossCLIP}.
+
+We note here the deviation from the original AstroCLIP paper (v1): in the original papers, the authors pre-train a transformer model, structured similar to GPT-2, to embed the spectra. This is a much larger model than Spender, totalling around 43.2M parameters. However, the transformer model is not publicly available, and the authors do not provide details on the pre-training process. Instead, we opt to use the Spender model based on the suggestion of one of the authors. We provide details of 
+the two models, the data used and the training process in the following sections.
+
+
+
+\subsection{Data}
+\subsubsection*{DESI Legacy Survey Images}
+We use the same data as the original AstroCLIP paper (v1). For galaxy images, we sue the DESI Legacy Survey Data Release 9 imaging data from January 2021 \cite{DESI} as prepared by Stein et. al \cite{stein}. The $g$ and $r$ band data for the northern galactic cap (NGC) were captured by the Beijing-Arizona Sky Survey, while the $z$ band data came from the Mayall Legacy Survey. For the southern galactic cap (SGC), the data were collected by the Dark Energy Camera Legacy Survey (DECaLS). We filter out the images that were identified as stars by the Legacy Survey team and impose a mag$_z$ cutoff for $z$-bands above 20. This corresponds to an initial dataset of 41M (g,r,z) images of size $152 \times 152$, which we centre-crop to $96 \times 96$ for training. The cropping is done as the great majority of galaxies cover less area than the total size of the image and thus often include overlaping regions of the sky.
+
+\subsubsection*{DESI Spectra}
+To pair the images with spectra, we cross-match the galaxy spectra from the DESI Early Data Release \cite{DESI2023}, which contains spectra observed by the Survery Validation compaign. This cross-match is done using the target IDs associated with each galaxy. This results in total subset of 197,976 pairs of images and spectra. During the training process, we Z-score normalise each individual spectrum to have zero mean and unit variance. We then split the data into training and validation sets, with 90\% of the data used for training and 10\% for validation.
+
+\subsubsection*{Data Catalogue for Downstream Tasks}
+For experiments involving the prediction of physical properties from the embeddings, we further cross-match the image-spectrum pairs with the PRObabilistic Value-Added Bright Galaxy Survery (PROVABGS) catalogue \cite{PROVABGS}. We then specifically extract the estimates of the redshift ($\mathcal{Z}$) and stellar mass ($M_{\star}$) for each galaxy ID that is present in the catalogue. We then perform the same filtering process as the original AstroCLIP paper: we only select enetries for which $M_{\star} > 0$ and mag$_g$,mag$_r$,mag$_z$ $> 0$, removing spurious entries. This yields a total of 105,159 entries, which we split into training and validation using a 90/10 ratio.
+
+
+
+\subsection{Pre-trained Image Embedder} 
+The pre-trained image embedder we used in this reconstruction was developed by Stein et. al. (2021a) \cite{stein}. It is based on the MoCo v2 framework \cite{mocov2}, and it uses a ResNet-50 backbone as the encoder network. The model was pre-trained on a curated subset of 3.5M galaxies sampled uniformly by $z$-bands magnitude from the DESI Legacy Survey. They authors use a single-modal contrastive learning SSL framework, where each image undergoes multiple stochastic augmentations to create two views of the same image. The augmentations include galactic extinction, random cropping, random rotation, size scaling, point-spread function blur, jittering and Gaussian noise addition. The model was then trained on a contrastive loss function to align the representations of the two views in the embedding space. 
+
+The model is publicly available and can be downloaded from the authors' GitHub repository. This model has 50 ResNet blocks that contain a batch normalisation opeartoin, followed by an activation function and a convolutional layer. It has a total of 28M parameters. We keep the convolutional layers frozen during constrastive training, and use the final fully connected layer as the trainable projection head. This amounts to 4.5M trainable parameters that are finetuned under InfoNCE loss. 
+
+
+\subsection{Spectrum Embedder}
+We choose to use the Spender model 
+%\cite{spender} as the spectrum embedder. 
+
+from Serrà et al. (2018) to extract latent parameters from observed spectra. The
+architecture starts with three convolutional layers with progressively wider kernel
+sizes (5, 11, 21), trainable PReLU activations (He et al. 2015), and max-pooling,
+which translates $M = 3921$ spectral elements into 512 channels for 72 wavelength
+segments.It then applies attention in wavelength direction to these channels, i.e. it
+splits the channels into two parts, $\mathbf{h}$ and $\mathbf{k}$ ($\in \mathbb{R}^{256 \times 72}$), and combines them as
+\begin{equation}
+    \mathbf{e} = \mathbf{h} \cdot \text{softmax}(\mathbf{k}) \equiv \mathbf{h} \cdot \mathbf{a},
+\end{equation}
+where the dot product and the softmax operate on the last, i.e. the wavelength dimension. The vector $\mathbf{a}$ contains the attention weights, indicating whether and where
+relevant signals have been found, so that their corresponding values are promoted to
+the attended features $\mathbf{e}$. This architecture is capable of accounting for the apparent shift of spectral features in galaxies at different redshifts. It behaves similar to
+traditional redshift estimation techniques that scan for particular spectral lines (e.g.
+SubbaRao et al. 2002) and, because of the wide convolution kernels, naturally folds
+in continuum features to form a highly informative latent representation.
+
+
+
+
+
+
+\newpage
+\bibliographystyle{unsrt}
+\bibliography{references.bib}
 
 \end{document}
