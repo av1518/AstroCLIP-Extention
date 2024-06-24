@@ -109,6 +109,7 @@ We want this embedding space to maximise the mutual information $I(f_{\theta}(\m
 where $\mathbf{z}^x_i=f(\mathbf{x}_i)$ and $\mathbf{z}^y_i=g(\mathbf{y}_i)$, $\tau > 0$ denotes a smoothing parameter (referred to as temperature) , $S_C(\mathbf{z}^x_i, \mathbf{z}^y_i)$ is a similarity metric between the two representations, and $j$ represent the indices of negative examples (i.e representations of different objects to object $i$). For the similarity metric in CLIP, we use the cosine similarity between the two representations in the embedding space given by:
 \begin{equation}
     S_C(\mathbf{z}^x_i, \mathbf{z}^y_j) = \frac{(\mathbf{z}^x_i)^T \mathbf{z}^y_j}{\|\mathbf{z}^x_i\|^2 \|\mathbf{z}^y_j\|^2}.
+    \label{eq:cosine}
 \end{equation}
 InfoNCE is biased, but it represents a stable, low variance bound on the mutual information that is widely used in constrastive methods \cite{crossCLIP}. Under InfoNCE, points in the embedding space that correspond to the same object are pulled together, while points that correspod to different objects are pushed apart.
 
@@ -157,7 +158,7 @@ The pre-trained image embedder we used in this reconstruction was developed by S
 The model is publicly available and can be downloaded from the authors' GitHub repository. This model has 50 ResNet blocks that contain a batch normalisation opeartoin, followed by an activation function and a convolutional layer. It has a total of 28M parameters. We keep the convolutional layers frozen during constrastive training, and use the final fully connected layer as the trainable projection head. This amounts to 4.5M trainable parameters that are finetuned under InfoNCE loss. 
 
 
-\subsection{Spectrum Embedder}
+\subsection{Pre-trained Spectrum Embedder}
 We choose to use the Spender model \cite{spender}, an autoencoder network, to extract latent parameters from the observed spectra. The encoder part of the network consists of three convolutional layers with progressively wider kernel sizes (5, 11, 21), each followed by a trainable PReLU activation function and max-pooling. This translates the $M=3921$ spectral components into 512 channels. The model then applies attention by splitting the channels into two: $\mathbf{h}$ and $\mathbf{k}$, each of 
 dimension $256 \times 72$. It then combines these channels as follows:
 
@@ -185,15 +186,20 @@ We then normalise both image and spectrum embeddings as:
 and use the normalised galaxy embeddings in a shared, cross-modal latent space to perform the tasks outlined below.
 
 \subsubsection*{Query Retrieval}
+We showcase the architecture's ability to align embeddings of galaxies, we choose a random galaxy from the validation set and retrieve similar galaxies purely based on the embedding space structure. Specifically, we perform the galaxy search using the cosine-similarity (eq.(\ref{eq:cosine})) between the query galaxy $\bar{\mathbf{z}}_q$ and all other galaxies in the validation set. We then rank the galaxies based on the similarity score and display the top 5 most similar galaxies. For instance, to search for galaxy images that correspond to a specific query spectrum $\mathbf{y}_i$, we calculate the cosine similarity between the query spectrum embedding $\{\mathbf{x}^{sp}_i\}_{val}$ and the image embeddings $\{\mathbf{x}^{im}_i\}_{val}$ in the validation set. The target images with the highest similarity values are then returned. This process requires no additional transformations or alterations.
+
+This allows us to search the embedding space for both the image and spectrum embeddings, which is unique to this cross-modal framework. We present examples for both \emph{in-modality} $S_{C}(\mathbf{z}^{im}_q, \mathbf{z}^{im}_j)$ or $S_{C}(\mathbf{z}^{sp}_q, \mathbf{z}^{sp}_j)$, where the query and target embeddings are of the same modality, and \emph{cross-modality} $S_{C}(\mathbf{z}^{im}_q, \mathbf{z}^{sp}_j)$ or $S_{C}(\mathbf{z}^{sp}_q, \mathbf{z}^{im}_j)$, where the query and target embeddings are of different modalities.
 
 
 
 
 
-\subsection*{Zero Shot Prediction of Physical Properties}
 
 
+\subsubsection*{Zero Shot Prediction of Physical Properties}
+To evaluate AstroCLIP's ability to predict physical properties of galaxies, we consider the task of predicting the catalogue-based redshift $\mathcal{Z}$ and stellar mass $M_{\star}$ of galaxies from the embedded galaxy representations. We use simple $k$-Nearest Neighbour ($k$-NN) our embedded images and spectra to predict the physical properties without any additional training or finetuning.  We do this by further splitting the 30K pairs in the validation set into a training and held-out test set. We then train a $k$-NN regressor on the new training set and evaluate its performance on the test set. We then instantiate the $KNeighborsRegressor$ with parameters set to \texttt{weights="distance"} and \texttt{n\_neighbors=16}. By setting \texttt{weights} to \texttt{"distance"}, the algorithm ensures that closer neighbors have a greater influence on the prediction, as their contributions are inversely proportional to their distances from the query point. This method allows us to calculate the predicted values for redshift and stellar mass as weighted averages of the target values of these nearest neighbors.
 
+\subsubsection*(Visulisation and Clustering of the Embedding Space)
 
 
 \newpage

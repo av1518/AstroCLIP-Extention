@@ -18,6 +18,10 @@ import numpy as np
 from src.utils import dr2_rgb
 
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+
 from scipy.ndimage import gaussian_filter1d as gf
 
 print("imports done")
@@ -167,7 +171,8 @@ for i in range(8):
 plt.subplots_adjust(wspace=0.01, hspace=0.01)
 
 # %%
-ind_queries = [4, 12, 29, 23]
+ind_queries = [4, 300, 669, 23]
+# good:14,500
 results = {
     "images_sp_sp": [],  # Spectral query, spectral retrieval (sp_sim)
     "images_im_im": [],  # Image query, image retrieval (im_sim)
@@ -255,8 +260,55 @@ for n, i in enumerate(ind_queries):
             plt.title("Cross Image-Spectra\-Similarity")
 
 plt.subplots_adjust(wspace=0.0, hspace=0.3)
-# plt.savefig('retrieval.png', bbox_inches='tight', pad_inches=0)
+plt.savefig("figures/retrievals_together.png", bbox_inches="tight", pad_inches=0)
 plt.show()
+# %% Plot each one separately
+fig_size = (9, 12)
+horizontal_space = -0.4  # No horizontal space between images in a row
+vertical_space = 0.02  # Vertical space between rows
+
+
+def create_similarity_plot(results_key, title):
+    plt.figure(figsize=fig_size)
+    for n in range(len(ind_queries)):
+        images = results[results_key][n]
+        for j in range(3):
+            index = n * 3 + j + 1
+            ax = plt.subplot(4, 3, index)
+            ax.imshow(images[j])
+            ax.axis("off")
+    plt.tight_layout(rect=[0, 0, 1, 0.95])  # Adjust rect if necessary for title
+    plt.subplots_adjust(wspace=horizontal_space, hspace=vertical_space)
+    plt.savefig(f"figures/{results_key}.png", bbox_inches="tight", dpi=300)
+    plt.show()
+
+
+def show_query_images():
+    plt.figure(figsize=(3, 12))
+    for n, i in enumerate(ind_queries):
+        ax = plt.subplot(4, 1, n + 1)
+        ax.imshow(source_images[i])
+        ax.axis("off")
+        # Adding a colored border
+        rect = patches.Rectangle(
+            (0, 0),
+            source_images[i].shape[1],
+            source_images[i].shape[0],
+            linewidth=8,
+            edgecolor="red",
+            facecolor="none",
+        )
+        ax.add_patch(rect)
+    plt.tight_layout()
+    plt.show()
+
+
+show_query_images()
+create_similarity_plot("images_sp_sp", "Spectrum-Spectrum Similarity")
+create_similarity_plot("images_im_im", "Image-Image Similarity")
+create_similarity_plot("images_sp_im", "Cross Spectrum-Image Similarity")
+create_similarity_plot("images_im_sp", "Cross Image-Spectrum Similarity")
+
 
 # %% Plot spectral retrieval
 
@@ -286,15 +338,14 @@ for n, i in enumerate(ind_queries):
     for j in range(3):
         plt.plot(
             l,
-            results["spectra_sp_sp"][n][j],
+            gf(results["spectra_sp_sp"][n][j][:, 0], 2),
             color="grey",
             alpha=0.5,
             label="Retrieved",
         )
-    plt.plot(l, query_sp, color="blue", alpha=0.2, label="Query")
+    plt.plot(l, gf(query_sp[:, 0], 2), color="blue", alpha=0.2, label="Query")
     plt.legend()
     plt.show()
-
 
 # spectra im_im
 for n, i in enumerate(ind_queries):
@@ -354,6 +405,140 @@ for n, i in enumerate(ind_queries):
     plt.plot(l, query_sp, color="blue", alpha=0.2, label="Query")
     plt.legend()
     plt.show()
+# %%
+from scipy.ndimage import gaussian_filter1d as gf
+import matplotlib.pyplot as plt
+
+
+def plot_spectra(ind_queries, results, results_key, title, l):
+    for n, i in enumerate(ind_queries):
+        query_sp = source_spec[i]
+        plt.figure(figsize=[15, 5])
+        plt.title(title)
+        plt.ylim(-0, 20)
+        for j in range(3):
+            # Apply Gaussian filter to each retrieved spectrum's first column
+            filtered_spectrum = gf(results[results_key][n][j][:, 0], 2)
+            plt.plot(
+                l,
+                filtered_spectrum,
+                color="grey",
+                alpha=0.5,
+                label=(
+                    "Retrieved" if j == 0 else None
+                ),  # Label only the first to avoid legend repetition
+            )
+        # Apply Gaussian filter to the query spectrum's first column
+        filtered_query_sp = gf(query_sp[:, 0], 2)
+        plt.plot(l, filtered_query_sp, color="blue", alpha=0.2, label="Query")
+        if n == 0:  # Add legend only once
+            plt.legend()
+        plt.show()
+
+
+# Example usage:
+plot_spectra(
+    ind_queries,
+    results,
+    "spectra_sp_sp",
+    "Spectral query, spectral retrieval (sp_sp)",
+    l,
+)
+
+plot_spectra(
+    ind_queries, results, "spectra_im_im", "Image query, image retrieval (im_im)", l
+)
+plot_spectra(
+    ind_queries, results, "spectra_sp_im", "Spectral query, image retrieval (sp_im)", l
+)
+plot_spectra(
+    ind_queries, results, "spectra_im_sp", "Image query, spectral retrieval (im_sp)", l
+)
+
+
+# %% Plot each one separately for the figures
+def plot_spectra_with_image(
+    ind_queries,
+    results,
+    results_key,
+    title,
+    l,
+    source_images,
+    image_location="lower right",
+):
+    for n, i in enumerate(ind_queries):
+        query_sp = source_spec[i]
+        query_img = source_images[
+            i
+        ]  # Assuming source_images is the list/array of images corresponding to each spectrum
+
+        plt.figure(figsize=[8, 6])
+        ax_main = plt.gca()  # Get current axis
+        # plt.title(title)
+        # plt.ylim(-0, 20)
+        for j in range(3):
+            # Apply Gaussian filter to each retrieved spectrum's first column
+            filtered_spectrum = gf(results[results_key][n][j][:, 0], 2)
+            plt.plot(
+                l,
+                filtered_spectrum,
+                color="grey",
+                alpha=0.5,
+                label="Retrieved spectra" if j == 0 else None,
+            )
+        # Apply Gaussian filter to the query spectrum's first column
+        filtered_query_sp = gf(query_sp[:, 0], 2)
+        plt.plot(l, filtered_query_sp, color="navy", alpha=1, label="Query spectrum")
+        plt.legend(loc="upper left")
+        plt.xlabel(r"$\lambda (\AA)$")
+        plt.ylabel("Flux")
+
+        # Create an inset image at the top right corner of the plot
+        ax_inset = inset_axes(ax_main, width="30%", height="30%", loc=image_location)
+        ax_inset.imshow(query_img)
+        ax_inset.axis("off")  # Turn off axis for inset
+        plt.show()
+
+
+# Example usage:
+plot_spectra_with_image(
+    ind_queries,
+    results,
+    "spectra_sp_sp",
+    "Spectral query, spectral retrieval (sp_sp)",
+    l,
+    source_images,
+    "upper right",
+)
+# %%
+plot_spectra_with_image(
+    ind_queries,
+    results,
+    "spectra_im_im",
+    "Image query, image retrieval (im_im)",
+    l,
+    source_images,
+)
+# %%
+plot_spectra_with_image(
+    ind_queries,
+    results,
+    "spectra_sp_im",
+    "Spectral query, image retrieval (sp_im)",
+    l,
+    source_images,
+)
+# %%
+plot_spectra_with_image(
+    ind_queries,
+    results,
+    "spectra_im_sp",
+    "Image query, spectral retrieval (im_sp)",
+    l,
+    source_images,
+    "upper right",
+)
+# %%
 
 
 # %% visualise the embeddings
@@ -472,53 +657,6 @@ from sklearn.neighbors import KNeighborsRegressor
 import seaborn as sns
 from sklearn.metrics import r2_score
 
-print("Zero shot redshift prediction from image features")
-
-split = 5000
-
-neigh = KNeighborsRegressor(weights="distance", n_neighbors=16)
-neigh.fit(image_features[:-split], redshifts[:-split])
-preds = neigh.predict(image_features[-split:])
-
-
-sns.scatterplot(x=redshifts[-split:], y=preds, s=5, color=".15")
-sns.histplot(x=redshifts[-split:], y=preds, bins=64, pthresh=0.1, cmap="mako")
-sns.kdeplot(x=redshifts[-split:], y=preds, levels=5, color="w", linewidths=1)
-plt.xlabel("True redshift")
-plt.ylabel("Predicted redshift")
-plt.plot([0, 1], [0, 1], color="grey", linestyle="--")
-plt.title("Zero-shot redshift prediction from image features")
-plt.xlim(0, 0.65)
-plt.ylim(0, 0.65)
-plt.text(
-    0.05,
-    0.55,
-    "$R^2$ score: %0.2f" % (r2_score(redshifts[-split:], preds)),
-    fontsize="large",
-)
-# %% from spectra
-
-split = 5000
-
-neigh = KNeighborsRegressor(weights="distance", n_neighbors=16)
-neigh.fit(spectra[:-split], redshifts[:-split])
-preds = neigh.predict(spectra[-split:])
-sns.scatterplot(x=redshifts[-split:], y=preds, s=5, color=".15")
-sns.histplot(x=redshifts[-split:], y=preds, bins=64, pthresh=0.1, cmap="mako")
-sns.kdeplot(x=redshifts[-split:], y=preds, levels=5, color="w", linewidths=1)
-plt.xlabel("True redshift")
-plt.ylabel("Predicted redshift")
-plt.title("Zero-shot redshift prediction from spectra")
-plt.plot([0, 1], [0, 1], color="grey", linestyle="--")
-plt.xlim(0, 0.65)
-plt.ylim(0, 0.65)
-plt.text(
-    0.05,
-    0.55,
-    "$R^2$ score: %0.2f" % (r2_score(redshifts[-split:], preds)),
-    fontsize="large",
-)
-
 # %% Stellar mass zero shot prediction
 from astropy.table import Table, join
 
@@ -534,7 +672,7 @@ embedding_table = Table(
 )
 provabgs = join(provabgs, embedding_table, keys_left="TARGETID", keys_right="targetid")
 
-# remove invalid values
+# remove invalid values (spurious entries)
 provabgs = provabgs[
     (provabgs["PROVABGS_LOGMSTAR_BF"] > 0)
     * (provabgs["MAG_G"] > 0)
@@ -548,7 +686,7 @@ np.random.seed(25101999)
 # randomise the order
 provabgs = provabgs[np.random.permutation(len(provabgs))]
 # %%
-print(len(provabgs))
+print("Number of galaxies in the provabgs table:", len(provabgs))
 # %% Stellar mass zero shot prediction from image embeddings
 
 split = 5000
@@ -561,8 +699,8 @@ neigh.fit(
 preds = neigh.predict(provabgs["image_embedding"][-split:])
 sns.scatterplot(x=provabgs["PROVABGS_LOGMSTAR_BF"][-split:], y=preds, s=5, color=".15")
 sns.histplot(
-    x=np.clip(provabgs["PROVABGS_LOGMSTAR_BF"][-split:], 8, 12),
-    y=np.clip(preds, 8, 12),
+    x=np.clip(provabgs["PROVABGS_LOGMSTAR_BF"][-split:], 8, 12.5),
+    y=np.clip(preds, 8, 12.5),
     bins=64,
     pthresh=0.1,
     cmap="mako",
@@ -574,19 +712,20 @@ sns.kdeplot(
     color="w",
     linewidths=1,
 )
-plt.xlabel("True log stellar mass")
-plt.ylabel("Predicted log stellar mass")
-plt.title("Stellar mass pred with image embeddings")
-plt.plot([8, 12], [8, 12], color="grey", linestyle="--")
+plt.xlabel(r"ProvaBGS Log Stellar Mass $[M_{\odot}]$")
+plt.ylabel(r"$k$-NN Predicted Log Stellar Mass $[M_{\odot}]$")
+# plt.title("Stellar mass pred with image embeddings")
+plt.plot([8, 15], [8, 15], color="grey", linestyle="--")
 plt.xlim(8, 12.5)
 plt.ylim(8, 12.5)
 plt.text(
     8.5,
-    11.5,
+    11.8,
     "$R^2$ score: %0.2f" % (r2_score(provabgs["PROVABGS_LOGMSTAR_BF"][-split:], preds)),
     fontsize="large",
 )
-
+plt.savefig("figures/zeroshot_stellarmass_image.png", bbox_inches="tight", dpi=300)
+plt.show()
 # %% Stellar mass zero shot prediction from spectra
 split = 5000
 
@@ -595,10 +734,11 @@ neigh.fit(
     provabgs["spectrum_embedding"][:-split], provabgs["PROVABGS_LOGMSTAR_BF"][:-split]
 )
 preds = neigh.predict(provabgs["spectrum_embedding"][-split:])
+# %%
 sns.scatterplot(x=provabgs["PROVABGS_LOGMSTAR_BF"][-split:], y=preds, s=5, color=".15")
 sns.histplot(
-    x=np.clip(provabgs["PROVABGS_LOGMSTAR_BF"][-split:], 8, 12),
-    y=np.clip(preds, 8, 12),
+    x=np.clip(provabgs["PROVABGS_LOGMSTAR_BF"][-split:], 8, 12.5),
+    y=np.clip(preds, 8, 15),
     bins=64,
     pthresh=0.1,
     cmap="mako",
@@ -610,19 +750,21 @@ sns.kdeplot(
     color="w",
     linewidths=1,
 )
-plt.xlabel("True log stellar mass")
-plt.ylabel("Predicted log stellar mass")
-plt.title("Stellar mass pred with spectrum embeddings")
-plt.plot([8, 12], [8, 12], color="grey", linestyle="--")
+plt.xlabel(r"ProvaBGS log stellar mass $[M_{\odot}]$")
+plt.ylabel(r"$k$-NN Predicted log stellar mass $[M_{\odot}]$")
+# plt.title("Stellar mass pred with spectrum embeddings")
+plt.plot([8, 15], [8, 15], color="grey", linestyle="--")
 plt.xlim(8, 12.5)
 plt.ylim(8, 12.5)
 
 plt.text(
     8.5,
-    11.5,
+    11.8,
     "$R^2$ score: %0.2f" % (r2_score(provabgs["PROVABGS_LOGMSTAR_BF"][-split:], preds)),
     fontsize="large",
 )
+plt.savefig("figures/zeroshot_stellarmass_spectrum.png", bbox_inches="tight", dpi=300)
+plt.show()
 
 # %% Cross-modal similarity
 split = 5000
@@ -633,8 +775,8 @@ neigh.fit(
 preds = neigh.predict(provabgs["image_embedding"][-split:])
 sns.scatterplot(x=provabgs["PROVABGS_LOGMSTAR_BF"][-split:], y=preds, s=5, color=".15")
 sns.histplot(
-    x=np.clip(provabgs["PROVABGS_LOGMSTAR_BF"][-split:], 8, 12),
-    y=np.clip(preds, 8, 12),
+    x=np.clip(provabgs["PROVABGS_LOGMSTAR_BF"][-split:], 8, 15),
+    y=np.clip(preds, 8, 15),
     bins=64,
     pthresh=0.1,
     cmap="mako",
@@ -646,18 +788,20 @@ sns.kdeplot(
     color="w",
     linewidths=1,
 )
-plt.xlabel("True log stellar mass")
-plt.ylabel("Predicted log stellar mass")
-plt.title("Stellar mass pred cross-modal (spectrum regression, prediction with image)")
-plt.plot([8, 12], [8, 12], color="grey", linestyle="--")
-plt.xlim(8, 12.5)
-plt.ylim(8, 12.5)
+plt.xlabel(r"ProvaBGS log stellar mass $[M_{\odot}]$")
+plt.ylabel(r"$k$-NN Predicted log stellar mass $[M_{\odot}]$")
+# plt.title("Stellar mass pred cross-modal (spectrum regression, prediction with image)")
+plt.plot([8, 15], [8, 15], color="grey", linestyle="--")
+plt.xlim(9, 12.5)
+plt.ylim(9, 12.5)
 plt.text(
-    8.5,
-    11.5,
+    9.3,
+    12,
     "$R^2$ score: %0.2f" % (r2_score(provabgs["PROVABGS_LOGMSTAR_BF"][-split:], preds)),
     fontsize="large",
 )
+plt.savefig("figures/zeroshot_stellarmass_crossmodal.png", bbox_inches="tight", dpi=300)
+plt.show()
 
 # %% Redshift prediction from images
 split = 5000
@@ -679,18 +823,20 @@ sns.kdeplot(
     color="w",
     linewidths=1,
 )
-plt.xlabel("True redshift")
-plt.ylabel("Predicted redshift")
-plt.title("Redshift pred with image embeddings")
+plt.xlabel("ProvaBGS Redshift $Z_{HP}$")
+plt.ylabel(r"$k$-NN Predicted Redshift $Z_{HP}$")
+# plt.title("Redshift pred with image embeddings")
 plt.plot([0, 0.65], [0, 0.65], color="grey", linestyle="--")
-# plt.xlim(0, 0.65)
-# plt.ylim(0, 0.65)
+plt.xlim(0, 0.65)
+plt.ylim(0, 0.65)
 plt.text(
     0.05,
     0.55,
     "$R^2$ score: %0.2f" % (r2_score(provabgs["Z_HP"][-split:], preds)),
     fontsize="large",
 )
+plt.savefig("figures/zeroshot_redshift_image.png", bbox_inches="tight", dpi=300)
+plt.show()
 # %% Redshift prediction from spectra
 split = 5000
 neigh = KNeighborsRegressor(weights="distance", n_neighbors=16)
@@ -711,12 +857,12 @@ sns.kdeplot(
     color="w",
     linewidths=1,
 )
-plt.xlabel("True redshift")
-plt.ylabel("Predicted redshift")
-plt.title("Redshift pred with spectrum embeddings")
+plt.xlabel("ProvaBGS Redshift $Z_{HP}$")
+plt.ylabel(r"$k$-NN Predicted Redshift $Z_{HP}$")
+# plt.title("Redshift pred with spectrum embeddings")
 plt.plot([0, 0.65], [0, 0.65], color="grey", linestyle="--")
-# plt.xlim(0, 0.65)
-# plt.ylim(0, 0.65)
+plt.xlim(0, 0.65)
+plt.ylim(0, 0.65)
 
 plt.text(
     0.05,
@@ -724,6 +870,8 @@ plt.text(
     "$R^2$ score: %0.2f" % (r2_score(provabgs["Z_HP"][-split:], preds)),
     fontsize="large",
 )
+plt.savefig("figures/zeroshot_redshift_spectrum.png", bbox_inches="tight", dpi=300)
+plt.show()
 # %% Cross-modal redshift prediction
 split = 5000
 neigh = KNeighborsRegressor(weights="distance", n_neighbors=16)
@@ -744,12 +892,12 @@ sns.kdeplot(
     color="w",
     linewidths=1,
 )
-plt.xlabel("True redshift")
-plt.ylabel("Predicted redshift")
-plt.title("Redshift pred cross-modal (spectrum regression, prediction with image)")
+plt.xlabel("ProvaBGS Redshift $Z_{HP}$")
+plt.ylabel("Predicted Redshift $Z_{HP}$")
+# plt.title("Redshift pred cross-modal (spectrum regression, prediction with image)")
 plt.plot([0, 0.65], [0, 0.65], color="grey", linestyle="--")
-# plt.xlim(0, 0.65)
-# plt.ylim(0, 0.65)
+plt.xlim(0, 0.65)
+plt.ylim(0, 0.65)
 
 plt.text(
     0.05,
@@ -757,4 +905,6 @@ plt.text(
     "$R^2$ score: %0.2f" % (r2_score(provabgs["Z_HP"][-split:], preds)),
     fontsize="large",
 )
+plt.savefig("figures/zeroshot_redshift_crossmodal.png", bbox_inches="tight", dpi=300)
+plt.show()
 # %%
