@@ -104,6 +104,7 @@ We want this embedding space to maximise the mutual information $I(f_{\theta}(\m
 
 \begin{equation}
     \mathcal{L}_{\text{InfoNCE}}(\mathbf{z}^x, \mathbf{z}^y, \tau) = -\frac{1}{K} \sum_{i=1}^{K} \log \frac{\exp\left(S_C(\mathbf{z}^x_i, \mathbf{z}^y_i)/\tau\right)}{\sum_{j}^{K} \exp\left(S_C(\mathbf{z}^x_i, \mathbf{z}^y_j)/\tau\right)}
+    \label{eq:infonce}
 \end{equation}
 where $\mathbf{z}^x_i=f(\mathbf{x}_i)$ and $\mathbf{z}^y_i=g(\mathbf{y}_i)$, $\tau > 0$ denotes a smoothing parameter (referred to as temperature) , $S_C(\mathbf{z}^x_i, \mathbf{z}^y_i)$ is a similarity metric between the two representations, and $j$ represent the indices of negative examples (i.e representations of different objects to object $i$). For the similarity metric in CLIP, we use the cosine similarity between the two representations in the embedding space given by:
 \begin{equation}
@@ -138,6 +139,7 @@ the two models, the data used and the training process in the following sections
 
 
 \subsection{Data}
+\label{sec:data}
 \subsubsection*{DESI Legacy Survey Images}
 We use the same data as the original AstroCLIP paper (v1). For galaxy images, we sue the DESI Legacy Survey Data Release 9 imaging data from January 2021 \cite{DESI} as prepared by Stein et. al \cite{stein}. The $g$ and $r$ band data for the northern galactic cap (NGC) were captured by the Beijing-Arizona Sky Survey, while the $z$ band data came from the Mayall Legacy Survey. For the southern galactic cap (SGC), the data were collected by the Dark Energy Camera Legacy Survey (DECaLS). We filter out the images that were identified as stars by the Legacy Survey team and impose a mag$_z$ cutoff for $z$-bands above 20. This corresponds to an initial dataset of 41M (g,r,z) images of size $152 \times 152$, which we centre-crop to $96 \times 96$ for training. The cropping is done as the great majority of galaxies cover less area than the total size of the image and thus often include overlaping regions of the sky.
 
@@ -156,25 +158,39 @@ The model is publicly available and can be downloaded from the authors' GitHub r
 
 
 \subsection{Spectrum Embedder}
-We choose to use the Spender model 
-%\cite{spender} as the spectrum embedder. 
+We choose to use the Spender model \cite{spender}, an autoencoder network, to extract latent parameters from the observed spectra. The encoder part of the network consists of three convolutional layers with progressively wider kernel sizes (5, 11, 21), each followed by a trainable PReLU activation function and max-pooling. This translates the $M=3921$ spectral components into 512 channels. The model then applies attention by splitting the channels into two: $\mathbf{h}$ and $\mathbf{k}$, each of 
+dimension $256 \times 72$. It then combines these channels as follows:
 
-from Serrà et al. (2018) to extract latent parameters from observed spectra. The
-architecture starts with three convolutional layers with progressively wider kernel
-sizes (5, 11, 21), trainable PReLU activations (He et al. 2015), and max-pooling,
-which translates $M = 3921$ spectral elements into 512 channels for 72 wavelength
-segments.It then applies attention in wavelength direction to these channels, i.e. it
-splits the channels into two parts, $\mathbf{h}$ and $\mathbf{k}$ ($\in \mathbb{R}^{256 \times 72}$), and combines them as
 \begin{equation}
     \mathbf{e} = \mathbf{h} \cdot \text{softmax}(\mathbf{k}) \equiv \mathbf{h} \cdot \mathbf{a},
 \end{equation}
-where the dot product and the softmax operate on the last, i.e. the wavelength dimension. The vector $\mathbf{a}$ contains the attention weights, indicating whether and where
-relevant signals have been found, so that their corresponding values are promoted to
-the attended features $\mathbf{e}$. This architecture is capable of accounting for the apparent shift of spectral features in galaxies at different redshifts. It behaves similar to
-traditional redshift estimation techniques that scan for particular spectral lines (e.g.
-SubbaRao et al. 2002) and, because of the wide convolution kernels, naturally folds
-in continuum features to form a highly informative latent representation.
+where the dot product and the softmax are applied on the last dimension, denoting the wavelength. The attention weights in vector $\mathbf{a}$ indicate the presence and location of relevant signals, allowing the corresponding values to be enhanced into the attended features $\mathbf{e}$. This approach efficiently accommodates the apparent shift of spectral features in galaxies at varying redshifts. These are then fed into a series of fully connected layers to compress the representation into a $s=6$ dimensional latent space. These are then fed into the decoder part of the network which reconstructs the original spectrum. As usual in autoencoder networks, it is trained end-to-end with an MSE loss function. 
 
+For AstroCLIP, we throw away the decoder part of the network, and use the convolutional layers and attention mechanism of the encoder. We replace the MLP which was used to compress the representation into a 6-dimensional latent space with a new fully connected MLP with 3 hidden layers of size 256, 128, 128 and a final output layer of size $d=128$ with ReLU activation functions. This is then trained under the InfoNCE loss function, while the convolutional layers and attention mechanism are kept frozen. The frozen layers contain semantic information about the spectra that is useful to incorporate through transfer learning. Overall, this amounts to [fix] trainable parameters, two orders of magnitude less than the original AstroCLIP encoder (4.5M parameters) \cite{astroclip}. 
+
+
+\subsection{Constrastive Training}
+The pre-trained models form parts of our unified AstroCLIP model. We then train both models under InfoNCE loss defined in eq.(\ref{eq:infonce}). The embedded representations that originate from the same galaxy are considered positive pairs, with all other considered negative pairs. Before an image is passed through the image embedder, we apply basic augementations in the following manner: a fixed crop to the central $96 \times 96$ pixels, random roation, random horizontal flip and gaussian blur. We set the batch size to $K=512$ image-spectrum pairs, as it was shown in Ref.\cite{radford2021learning} that larger batch sizes often correlate with better performance. We train the models using the Adam optimiser \cite{adam} for 80 epochs on a single NVIDIA A100-SXM-80GB GPU on the Camridge Wilkes3 cluster. We use an adaptable learning rate scheduler that reduces the learning rate by a factor of 2 (chosen by trial and error) if the validation loss does not improve for 5 epochs, using \verb|PyTorch|'s \verb|ReduceLROnPlateau| \cite{LRon}. Similar to the results observed in other studies such as Ref.\cite{gir},  our performance improves when we keep the temperature parameter $\tau$ constant rather than allowing it to vary. The training process takes roughly 2 hours to complete.
+
+\subsection{Downstream Tasks}
+To demonstrate the capabilities of AstroCLIP's embedding space, we demonstrate its performance across a range of tasks for which it was not explicitly trained for, nor fine-tuned. We firstly embed all galaxy image and spectra in the validation set (obtained as outlined in section \ref{sec:data}) using the trained AstroCLIP model as follows:
+
+\begin{equation}
+    \text{Initial Modality representation} : \left( \mathbf{x}^{\text{im}}, \mathbf{x}^{\text{sp}} \right) \xmapsto{\text{AstroCLIP}} \text{Embeddings} : \left( \mathbf{z}^{\text{im}}, \mathbf{z}^{\text{sp}} \right) \in \mathbb{R}^{128}.
+\end{equation}
+We then normalise both image and spectrum embeddings as:
+\begin{equation}
+    \mathbf{\bar{z}}^{im} =  \frac{\mathbf{z}^{im} }{|| \mathbf{z}^{im} ||_2}, \quad \mathbf{\bar{z}}^{sp} =  \frac{\mathbf{z}^{sp} }{|| \mathbf{z}^{sp} ||_2}.
+\end{equation}
+and use the normalised galaxy embeddings in a shared, cross-modal latent space to perform the tasks outlined below.
+
+\subsubsection*{Query Retrieval}
+
+
+
+
+
+\subsection*{Zero Shot Prediction of Physical Properties}
 
 
 
