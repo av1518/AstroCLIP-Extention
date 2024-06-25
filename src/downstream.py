@@ -698,7 +698,6 @@ neigh.fit(
     provabgs["image_embedding"][:-split], provabgs["PROVABGS_LOGMSTAR_BF"][:-split]
 )
 preds = neigh.predict(provabgs["image_embedding"][-split:])
-# %%
 # plt.figure(figsize=(5, 3.5))
 sns.scatterplot(x=provabgs["PROVABGS_LOGMSTAR_BF"][-split:], y=preds, s=5, color=".15")
 sns.histplot(
@@ -742,7 +741,7 @@ neigh.fit(
     provabgs["spectrum_embedding"][:-split], provabgs["PROVABGS_LOGMSTAR_BF"][:-split]
 )
 preds = neigh.predict(provabgs["spectrum_embedding"][-split:])
-# %%
+
 sns.scatterplot(x=provabgs["PROVABGS_LOGMSTAR_BF"][-split:], y=preds, s=5, color=".15")
 sns.histplot(
     x=np.clip(provabgs["PROVABGS_LOGMSTAR_BF"][-split:], 8, 12.5),

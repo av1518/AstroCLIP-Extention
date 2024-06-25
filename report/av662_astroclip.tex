@@ -328,105 +328,156 @@ In this section, we present our results from the AstroCLIP reproduction. Where a
 
 \subsection{Zero Shot Prediction of Physical Properties}
 
-% First Figure: Zero-shot Redshift
+% % First Figure: Zero-shot Redshift
+% \begin{figure}[H]
+%     \centering
+%     \begin{subfigure}[b]{0.32\textwidth}
+%         \centering
+%         \includegraphics[width=\textwidth]{../figures/zeroshot_redshift_crossmodal.png}
+%         \caption{Crossmodal}
+%         \label{fig:redshift_crossmodal}
+%     \end{subfigure}%
+%     \hfill
+%     \begin{subfigure}[b]{0.32\textwidth}
+%         \centering
+%         \includegraphics[width=\textwidth]{../figures/zeroshot_redshift_image.png}
+%         \caption{Image}
+%         \label{fig:redshift_image}
+%     \end{subfigure}%
+%     \hfill
+%     \begin{subfigure}[b]{0.32\textwidth}
+%         \centering
+%         \includegraphics[width=\textwidth]{../figures/zeroshot_redshift_spectrum.png}
+%         \caption{Spectrum}
+%         \label{fig:redshift_spectrum}
+%     \end{subfigure}
+%     \caption{Visualizations for zero-shot redshift estimation.}
+%     \label{fig:redshift}
+% \end{figure}
+
+% % Second Figure: Zero-shot Stellarmass
+% \begin{figure}[H]
+%     \centering
+%     \begin{subfigure}[b]{0.32\textwidth}
+%         \centering
+%         \includegraphics[width=\textwidth]{../figures/zeroshot_stellarmass_crossmodal.png}
+%         \caption{Crossmodal}
+%         \label{fig:stellarmass_crossmodal}
+%     \end{subfigure}%
+%     \hfill
+%     \begin{subfigure}[b]{0.32\textwidth}
+%         \centering
+%         \includegraphics[width=\textwidth]{../figures/zeroshot_stellarmass_image.png}
+%         \caption{Image}
+%         \label{fig:stellarmass_image}
+%     \end{subfigure}%
+%     \hfill
+%     \begin{subfigure}[b]{0.32\textwidth}
+%         \centering
+%         \includegraphics[width=\textwidth]{../figures/zeroshot_stellarmass_spectrum.png}
+%         \caption{Spectrum}
+%         \label{fig:stellarmass_spectrum}
+%     \end{subfigure}
+%     \caption{Visualizations for zero-shot stellar mass estimation.}
+%     \label{fig:stellarmass}
+% \end{figure}
+
+% % Zero-shot Stellarmass: Images in a column with captions on the right
+% \begin{figure}[H]
+%     \centering
+%     \begin{subfigure}[b]{\textwidth}
+%         \begin{minipage}[c]{0.50\textwidth}
+%             \centering
+%             \includegraphics[width=\textwidth]{../figures/zeroshot_stellarmass_crossmodal.png}
+%         \end{minipage}%
+%         \hfill
+%         \begin{minipage}[c]{0.50\textwidth}
+%             \caption{Crossmodal-Regression}
+%             \label{fig:stellarmass_crossmodal}
+%         \end{minipage}
+%     \end{subfigure}
+
+%     \vspace{1cm} % Space between rows
+
+%     \begin{subfigure}[b]{\textwidth}
+%         \begin{minipage}[c]{0.50\textwidth}
+%             \centering
+%             \includegraphics[width=\textwidth]{../figures/zeroshot_stellarmass_image.png}
+%         \end{minipage}%
+%         \hfill
+%         \begin{minipage}[c]{0.50\textwidth}
+%             \caption{Image Embeddings Regression}
+%             \label{fig:stellarmass_image}
+%         \end{minipage}
+%     \end{subfigure}
+
+%     \vspace{1cm} % Space between rows
+
+%     \begin{subfigure}[b]{\textwidth}
+%         \begin{minipage}[c]{0.50\textwidth}
+%             \centering
+%             \includegraphics[width=\textwidth]{../figures/zeroshot_stellarmass_spectrum.png}
+%         \end{minipage}%
+%         \hfill
+%         \begin{minipage}[c]{0.50\textwidth}
+%             \caption{Spectrum Embeddings Regression}
+%             \label{fig:stellarmass_spectrum}
+%         \end{minipage}
+%     \end{subfigure}
+
+%     \caption{Comprehensive visualization of zero-shot stellar mass estimation using various modalities.}
+%     \label{fig:stellarmass}
+% \end{figure}
+
 \begin{figure}[H]
     \centering
-    \begin{subfigure}[b]{0.32\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{../figures/zeroshot_redshift_crossmodal.png}
-        \caption{Crossmodal}
-        \label{fig:redshift_crossmodal}
-    \end{subfigure}%
-    \hfill
-    \begin{subfigure}[b]{0.32\textwidth}
+    % Row 1: Image Embeddings
+    \begin{subfigure}[b]{0.48\textwidth}
         \centering
         \includegraphics[width=\textwidth]{../figures/zeroshot_redshift_image.png}
-        \caption{Image}
+        \caption{Image Embeddings for Redshift}
         \label{fig:redshift_image}
     \end{subfigure}%
     \hfill
-    \begin{subfigure}[b]{0.32\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{../figures/zeroshot_redshift_spectrum.png}
-        \caption{Spectrum}
-        \label{fig:redshift_spectrum}
-    \end{subfigure}
-    \caption{Visualizations for zero-shot redshift estimation.}
-    \label{fig:redshift}
-\end{figure}
-
-% Second Figure: Zero-shot Stellarmass
-\begin{figure}[H]
-    \centering
-    \begin{subfigure}[b]{0.32\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{../figures/zeroshot_stellarmass_crossmodal.png}
-        \caption{Crossmodal}
-        \label{fig:stellarmass_crossmodal}
-    \end{subfigure}%
-    \hfill
-    \begin{subfigure}[b]{0.32\textwidth}
+    \begin{subfigure}[b]{0.48\textwidth}
         \centering
         \includegraphics[width=\textwidth]{../figures/zeroshot_stellarmass_image.png}
-        \caption{Image}
+        \caption{Image Embeddings for Stellar Mass}
         \label{fig:stellarmass_image}
+    \end{subfigure}
+    
+    % Row 2: Spectrum Embeddings
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/zeroshot_redshift_spectrum.png}
+        \caption{Spectrum Embeddings for Redshift}
+        \label{fig:redshift_spectrum}
     \end{subfigure}%
     \hfill
-    \begin{subfigure}[b]{0.32\textwidth}
+    \begin{subfigure}[b]{0.48\textwidth}
         \centering
         \includegraphics[width=\textwidth]{../figures/zeroshot_stellarmass_spectrum.png}
-        \caption{Spectrum}
+        \caption{Spectrum Embeddings for Stellar Mass}
         \label{fig:stellarmass_spectrum}
     \end{subfigure}
-    \caption{Visualizations for zero-shot stellar mass estimation.}
-    \label{fig:stellarmass}
-\end{figure}
 
-% Zero-shot Stellarmass: Images in a column with captions on the right
-\begin{figure}[H]
-    \centering
-    \begin{subfigure}[b]{\textwidth}
-        \begin{minipage}[c]{0.50\textwidth}
-            \centering
-            \includegraphics[width=\textwidth]{../figures/zeroshot_stellarmass_crossmodal.png}
-        \end{minipage}%
-        \hfill
-        \begin{minipage}[c]{0.50\textwidth}
-            \caption{Crossmodal-Regression}
-            \label{fig:stellarmass_crossmodal}
-        \end{minipage}
+    % Row 3: Cross-Modal Embeddings
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/zeroshot_redshift_crossmodal.png}
+        \caption{Cross-Modal Embeddings for Redshift}
+        \label{fig:redshift_crossmodal}
+    \end{subfigure}%
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/zeroshot_stellarmass_crossmodal.png}
+        \caption{Cross-Modal Embeddings for Stellar Mass}
+        \label{fig:stellarmass_crossmodal}
     \end{subfigure}
 
-    \vspace{1cm} % Space between rows
-
-    \begin{subfigure}[b]{\textwidth}
-        \begin{minipage}[c]{0.50\textwidth}
-            \centering
-            \includegraphics[width=\textwidth]{../figures/zeroshot_stellarmass_image.png}
-        \end{minipage}%
-        \hfill
-        \begin{minipage}[c]{0.50\textwidth}
-            \caption{Image Embeddings Regression}
-            \label{fig:stellarmass_image}
-        \end{minipage}
-    \end{subfigure}
-
-    \vspace{1cm} % Space between rows
-
-    \begin{subfigure}[b]{\textwidth}
-        \begin{minipage}[c]{0.50\textwidth}
-            \centering
-            \includegraphics[width=\textwidth]{../figures/zeroshot_stellarmass_spectrum.png}
-        \end{minipage}%
-        \hfill
-        \begin{minipage}[c]{0.50\textwidth}
-            \caption{Spectrum Embeddings Regression}
-            \label{fig:stellarmass_spectrum}
-        \end{minipage}
-    \end{subfigure}
-
-    \caption{Comprehensive visualization of zero-shot stellar mass estimation using various modalities.}
-    \label{fig:stellarmass}
+    \caption{Comparative visualizations of zero-shot redshift and stellar mass estimation across different embedding types.}
+    \label{fig:comparative_embeddings}
 \end{figure}
 
 
