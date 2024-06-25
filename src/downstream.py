@@ -295,15 +295,17 @@ def show_query_images():
             source_images[i].shape[1],
             source_images[i].shape[0],
             linewidth=8,
-            edgecolor="red",
+            edgecolor="green",
             facecolor="none",
         )
         ax.add_patch(rect)
-    plt.tight_layout()
+    plt.subplots_adjust(wspace=0, hspace=vertical_space)  # Match vertical spacing
+    plt.savefig("figures/query_images.png", bbox_inches="tight", dpi=300)
     plt.show()
 
 
 show_query_images()
+# %%
 create_similarity_plot("images_sp_sp", "Spectrum-Spectrum Similarity")
 create_similarity_plot("images_im_im", "Image-Image Similarity")
 create_similarity_plot("images_sp_im", "Cross Spectrum-Image Similarity")
@@ -691,40 +693,46 @@ print("Number of galaxies in the provabgs table:", len(provabgs))
 
 split = 5000
 
-
 neigh = KNeighborsRegressor(weights="distance", n_neighbors=16)
 neigh.fit(
     provabgs["image_embedding"][:-split], provabgs["PROVABGS_LOGMSTAR_BF"][:-split]
 )
 preds = neigh.predict(provabgs["image_embedding"][-split:])
+# %%
+# plt.figure(figsize=(5, 3.5))
 sns.scatterplot(x=provabgs["PROVABGS_LOGMSTAR_BF"][-split:], y=preds, s=5, color=".15")
 sns.histplot(
     x=np.clip(provabgs["PROVABGS_LOGMSTAR_BF"][-split:], 8, 12.5),
     y=np.clip(preds, 8, 12.5),
     bins=64,
     pthresh=0.1,
-    cmap="mako",
+    cmap="magma",
 )
 sns.kdeplot(
     x=provabgs["PROVABGS_LOGMSTAR_BF"][-split:],
     y=preds,
     levels=5,
-    color="w",
+    color="black",
     linewidths=1,
 )
-plt.xlabel(r"ProvaBGS Log Stellar Mass $[M_{\odot}]$")
-plt.ylabel(r"$k$-NN Predicted Log Stellar Mass $[M_{\odot}]$")
-# plt.title("Stellar mass pred with image embeddings")
+# Labels and limits with increased font sizes
+plt.xlabel(r"ProvaBGS Log Stellar Mass $[M_{\odot}]$", fontsize=14)
+plt.ylabel(r"$k$-NN Predicted Log Stellar Mass $[M_{\odot}]$", fontsize=14)
 plt.plot([8, 15], [8, 15], color="grey", linestyle="--")
-plt.xlim(8, 12.5)
-plt.ylim(8, 12.5)
+plt.xlim(9, 12.5)
+plt.ylim(9, 12.5)
+
+# Increase font size for tick labels
+plt.tick_params(axis="both", which="major", labelsize=12)
+
+# Adding text with a larger font size
 plt.text(
-    8.5,
+    9.3,
     11.8,
     "$R^2$ score: %0.2f" % (r2_score(provabgs["PROVABGS_LOGMSTAR_BF"][-split:], preds)),
-    fontsize="large",
+    fontsize=15,  # Increased font size for the added text
 )
-plt.savefig("figures/zeroshot_stellarmass_image.png", bbox_inches="tight", dpi=300)
+plt.savefig("figures/zeroshot_stellarmass_image.png", bbox_inches="tight", dpi=400)
 plt.show()
 # %% Stellar mass zero shot prediction from spectra
 split = 5000
@@ -741,29 +749,32 @@ sns.histplot(
     y=np.clip(preds, 8, 15),
     bins=64,
     pthresh=0.1,
-    cmap="mako",
+    cmap="magma",
 )
 sns.kdeplot(
     x=provabgs["PROVABGS_LOGMSTAR_BF"][-split:],
     y=preds,
     levels=5,
-    color="w",
+    color="black",
     linewidths=1,
 )
-plt.xlabel(r"ProvaBGS log stellar mass $[M_{\odot}]$")
-plt.ylabel(r"$k$-NN Predicted log stellar mass $[M_{\odot}]$")
+plt.xlabel(r"ProvaBGS log stellar mass $[M_{\odot}]$", fontsize=14)
+plt.ylabel(r"$k$-NN Predicted log stellar mass $[M_{\odot}]$", fontsize=14)
 # plt.title("Stellar mass pred with spectrum embeddings")
 plt.plot([8, 15], [8, 15], color="grey", linestyle="--")
-plt.xlim(8, 12.5)
-plt.ylim(8, 12.5)
+plt.xlim(9, 12.5)
+plt.ylim(9, 12.5)
+
+plt.tick_params(axis="both", which="major", labelsize=12)
+
 
 plt.text(
-    8.5,
+    9.3,
     11.8,
     "$R^2$ score: %0.2f" % (r2_score(provabgs["PROVABGS_LOGMSTAR_BF"][-split:], preds)),
-    fontsize="large",
+    fontsize=15,
 )
-plt.savefig("figures/zeroshot_stellarmass_spectrum.png", bbox_inches="tight", dpi=300)
+plt.savefig("figures/zeroshot_stellarmass_spectrum.png", bbox_inches="tight", dpi=400)
 plt.show()
 
 # %% Cross-modal similarity
@@ -779,17 +790,17 @@ sns.histplot(
     y=np.clip(preds, 8, 15),
     bins=64,
     pthresh=0.1,
-    cmap="mako",
+    cmap="magma",
 )
 sns.kdeplot(
     x=provabgs["PROVABGS_LOGMSTAR_BF"][-split:],
     y=preds,
     levels=5,
-    color="w",
+    color="black",
     linewidths=1,
 )
-plt.xlabel(r"ProvaBGS log stellar mass $[M_{\odot}]$")
-plt.ylabel(r"$k$-NN Predicted log stellar mass $[M_{\odot}]$")
+plt.xlabel(r"ProvaBGS log stellar mass $[M_{\odot}]$", fontsize=14)
+plt.ylabel(r"$k$-NN Predicted log stellar mass $[M_{\odot}]$", fontsize=14)
 # plt.title("Stellar mass pred cross-modal (spectrum regression, prediction with image)")
 plt.plot([8, 15], [8, 15], color="grey", linestyle="--")
 plt.xlim(9, 12.5)
@@ -798,9 +809,12 @@ plt.text(
     9.3,
     12,
     "$R^2$ score: %0.2f" % (r2_score(provabgs["PROVABGS_LOGMSTAR_BF"][-split:], preds)),
-    fontsize="large",
+    fontsize=15,
 )
-plt.savefig("figures/zeroshot_stellarmass_crossmodal.png", bbox_inches="tight", dpi=300)
+
+plt.tick_params(axis="both", which="major", labelsize=12)
+
+plt.savefig("figures/zeroshot_stellarmass_crossmodal.png", bbox_inches="tight", dpi=400)
 plt.show()
 
 # %% Redshift prediction from images
@@ -820,11 +834,11 @@ sns.kdeplot(
     x=provabgs["Z_HP"][-split:],
     y=preds,
     levels=5,
-    color="w",
+    color="black",
     linewidths=1,
 )
-plt.xlabel("ProvaBGS Redshift $Z_{HP}$")
-plt.ylabel(r"$k$-NN Predicted Redshift $Z_{HP}$")
+plt.xlabel("ProvaBGS Redshift $Z_{HP}$", fontsize=14)
+plt.ylabel(r"$k$-NN Predicted Redshift $Z_{HP}$", fontsize=14)
 # plt.title("Redshift pred with image embeddings")
 plt.plot([0, 0.65], [0, 0.65], color="grey", linestyle="--")
 plt.xlim(0, 0.65)
@@ -833,9 +847,12 @@ plt.text(
     0.05,
     0.55,
     "$R^2$ score: %0.2f" % (r2_score(provabgs["Z_HP"][-split:], preds)),
-    fontsize="large",
+    fontsize=15,
 )
-plt.savefig("figures/zeroshot_redshift_image.png", bbox_inches="tight", dpi=300)
+
+plt.tick_params(axis="both", which="major", labelsize=12)
+
+plt.savefig("figures/zeroshot_redshift_image.png", bbox_inches="tight", dpi=400)
 plt.show()
 # %% Redshift prediction from spectra
 split = 5000
@@ -854,11 +871,11 @@ sns.kdeplot(
     x=provabgs["Z_HP"][-split:],
     y=preds,
     levels=5,
-    color="w",
+    color="black",
     linewidths=1,
 )
-plt.xlabel("ProvaBGS Redshift $Z_{HP}$")
-plt.ylabel(r"$k$-NN Predicted Redshift $Z_{HP}$")
+plt.xlabel("ProvaBGS Redshift $Z_{HP}$", fontsize=14)
+plt.ylabel(r"$k$-NN Predicted Redshift $Z_{HP}$", fontsize=14)
 # plt.title("Redshift pred with spectrum embeddings")
 plt.plot([0, 0.65], [0, 0.65], color="grey", linestyle="--")
 plt.xlim(0, 0.65)
@@ -868,9 +885,10 @@ plt.text(
     0.05,
     0.55,
     "$R^2$ score: %0.2f" % (r2_score(provabgs["Z_HP"][-split:], preds)),
-    fontsize="large",
+    fontsize=15,
 )
-plt.savefig("figures/zeroshot_redshift_spectrum.png", bbox_inches="tight", dpi=300)
+plt.tick_params(axis="both", which="major", labelsize=12)
+plt.savefig("figures/zeroshot_redshift_spectrum.png", bbox_inches="tight", dpi=400)
 plt.show()
 # %% Cross-modal redshift prediction
 split = 5000
@@ -889,11 +907,11 @@ sns.kdeplot(
     x=provabgs["Z_HP"][-split:],
     y=preds,
     levels=5,
-    color="w",
+    color="black",
     linewidths=1,
 )
-plt.xlabel("ProvaBGS Redshift $Z_{HP}$")
-plt.ylabel("Predicted Redshift $Z_{HP}$")
+plt.xlabel("ProvaBGS Redshift $Z_{HP}$", fontsize=14)
+plt.ylabel("Predicted Redshift $Z_{HP}$", fontsize=14)
 # plt.title("Redshift pred cross-modal (spectrum regression, prediction with image)")
 plt.plot([0, 0.65], [0, 0.65], color="grey", linestyle="--")
 plt.xlim(0, 0.65)
@@ -903,8 +921,9 @@ plt.text(
     0.05,
     0.55,
     "$R^2$ score: %0.2f" % (r2_score(provabgs["Z_HP"][-split:], preds)),
-    fontsize="large",
+    fontsize=15,
 )
-plt.savefig("figures/zeroshot_redshift_crossmodal.png", bbox_inches="tight", dpi=300)
+plt.tick_params(axis="both", which="major", labelsize=12)
+plt.savefig("figures/zeroshot_redshift_crossmodal.png", bbox_inches="tight", dpi=400)
 plt.show()
 # %%
