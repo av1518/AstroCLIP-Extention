@@ -407,55 +407,6 @@ for n, i in enumerate(ind_queries):
     plt.plot(l, query_sp, color="blue", alpha=0.2, label="Query")
     plt.legend()
     plt.show()
-# %%
-from scipy.ndimage import gaussian_filter1d as gf
-import matplotlib.pyplot as plt
-
-
-def plot_spectra(ind_queries, results, results_key, title, l):
-    for n, i in enumerate(ind_queries):
-        query_sp = source_spec[i]
-        plt.figure(figsize=[15, 5])
-        plt.title(title)
-        plt.ylim(-0, 20)
-        for j in range(3):
-            # Apply Gaussian filter to each retrieved spectrum's first column
-            filtered_spectrum = gf(results[results_key][n][j][:, 0], 2)
-            plt.plot(
-                l,
-                filtered_spectrum,
-                color="grey",
-                alpha=0.5,
-                label=(
-                    "Retrieved" if j == 0 else None
-                ),  # Label only the first to avoid legend repetition
-            )
-        # Apply Gaussian filter to the query spectrum's first column
-        filtered_query_sp = gf(query_sp[:, 0], 2)
-        plt.plot(l, filtered_query_sp, color="blue", alpha=0.2, label="Query")
-        if n == 0:  # Add legend only once
-            plt.legend()
-        plt.show()
-
-
-# Example usage:
-plot_spectra(
-    ind_queries,
-    results,
-    "spectra_sp_sp",
-    "Spectral query, spectral retrieval (sp_sp)",
-    l,
-)
-
-plot_spectra(
-    ind_queries, results, "spectra_im_im", "Image query, image retrieval (im_im)", l
-)
-plot_spectra(
-    ind_queries, results, "spectra_sp_im", "Spectral query, image retrieval (sp_im)", l
-)
-plot_spectra(
-    ind_queries, results, "spectra_im_sp", "Image query, spectral retrieval (im_sp)", l
-)
 
 
 # %% Plot each one separately for the figures
@@ -540,7 +491,6 @@ plot_spectra_with_image(
     source_images,
     "upper right",
 )
-# %%
 
 
 # %% visualise the embeddings

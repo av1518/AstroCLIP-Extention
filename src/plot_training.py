@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 train_file_path = "data/wandb_export_train_loss.csv"
 train_data = pd.read_csv(train_file_path)
-val_file_path = "data/wandb_export_val_loss_no_temp.csv"
+val_file_path = "data/wandb_export_val_loss.csv"
 val_data = pd.read_csv(val_file_path)
 
 # Saved every 10 steps during training, need to conver to epochs
