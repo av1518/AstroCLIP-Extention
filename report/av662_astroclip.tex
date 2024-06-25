@@ -206,17 +206,23 @@ To evaluate AstroCLIP's ability to predict physical properties of galaxies, we c
 In this section, we present our results from the AstroCLIP reproduction. Where appropriate, we compare our results to the original AstroCLIP paper (v1) \cite{astroclip} and discuss possible reasons for any discrepancies. A discussion on the implications of our results and potential future work is also provided.
 
 \subsection{Loss Curves}
-
-\begin{figure}{H}
+Fig.\ref{fig:loss} shows the average InfoNCE loss per epoch for training and validation sets during the constrastive training. We note here that validation loss in constrative learning is not a direct measure of performance, but rather a proxy for the model's generalisation ability, as the training does not involve any labelled data.
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{../figures/training_plot.png}
-    \caption{}
+    \caption{Average InfoNCE loss per epoch for training and validation sets during constrastive training (top), and the learning rate schedule (bottom). The learning rate is reduced by a factor of 2 if the validation loss does not improve for 5 epochs.}
     \label{fig:loss}
 \end{figure}
 
+Both the training and validation loss decrease steadily over the 80 epochs, indicating that the model is learning to align the image and spectrum embeddings in the shared latent space. The validation loss is consistently higher than the training loss as expected, but does not diverge significantly nor is starting to increase, indicating that the model is not overfitting. Whenever the training loss plateaus for 5 epochs, the learning rate is reduced by a factor of 2, which results in further decrease in the loss. The loss continues to decrease, albeit at a slower rate, until the end of the training. This could indicate that the model has not fully converged and could benefit from further training. 
+
+The original work did not provide loss curves, learning rate nor the numbers of epochs, and so a direct comparison is not possible. 
+
+
+
 
 \subsection{Query Retrieval}
-
+We present the images of the four most similar galaxies (based on the cosine similarity of their embeddings) to four random query galaxy for all four possible combinations of modalities in Fig.\ref{fig:retrieval}. By construction, for in-modal searches the best match for the query galaxy is the galaxy itself, as the similarity score is 1.0. The model is able to retrieve galaxies that are visually similar to the query galaxy. The colour is well preserved in both in-modal and cross-modal searches, indicating that the model has learned to align the image and spectrum embeddings in the shared latent space. If the model was trained as a single-modal model, we would expect in-modal image searches to perform better than cross-modal searches. However, the model is able to retrieve visually similar galaxies in both cases, indicating that the both modality embeddings are informed by each other.  This is the reason why spectrum query - spectrum retrievals $S_C(\mathbf{z}^{sp}_q, \mathbf{z}^{sp}_j)$ are have similar images as well. 
 
 \begin{figure}[H]
     \centering
@@ -230,34 +236,36 @@ In this section, we present our results from the AstroCLIP reproduction. Where a
     \begin{subfigure}{0.22\textwidth}
         \centering
         \includegraphics[height=0.21\textheight]{../figures/images_im_im.png}
-        \caption{$S_C(\mathbf{z}_q^{im}, \mathbf{z}^{im})$}
+        \caption{$S_C(\mathbf{z}_q^{im}, \mathbf{z}_j^{im})$}
         \label{fig:retrieval_2}
     \end{subfigure}%
     \hfill
     \begin{subfigure}{0.22\textwidth}
         \centering
         \includegraphics[height=0.21\textheight]{../figures/images_sp_sp.png}
-        \caption{$S_C(\mathbf{z}_q^{sp}, \mathbf{z}^{sp})$}
+        \caption{$S_C(\mathbf{z}_q^{sp}, \mathbf{z}_j^{sp})$}
         \label{fig:retrieval_3}
     \end{subfigure}%
     \hfill
     \begin{subfigure}{0.22\textwidth}
         \centering
         \includegraphics[height=0.21\textheight]{../figures/images_im_sp.png}
-        \caption{$S_C(\mathbf{z}_q^{sp}, \mathbf{z}^{im})$}
+        \caption{$S_C(\mathbf{z}_q^{sp}, \mathbf{z}_j^{im})$}
         \label{fig:retrieval_4}
     \end{subfigure}%
     \hfill
     \begin{subfigure}{0.22\textwidth}
         \centering
         \includegraphics[height=0.21\textheight]{../figures/images_sp_im.png}
-        \caption{$S_C(\mathbf{z}_q^{im}, \mathbf{z}^{sp})$}
+        \caption{$S_C(\mathbf{z}_q^{im}, \mathbf{z}_j^{sp})$}
         \label{fig:retrieval_5}
     \end{subfigure}
     \caption{Your overall figure caption here.}
     \label{fig:retrieval}
 \end{figure}
+We further illustrate the search capabilities of this model by presenting the retrieved spectra for some of the randmly chosen query galaxies for all four possible combinations of modalities in Fig.\ref{fig:spectral_retrieval}. The 5 most similar spectra are shown for each query galaxy. The model is largely able to retrieve spectra similar to the query galaxy, in all modality pair combinations. This is both in terms of the overall shape of the spectrum and the presence of specific spectral features, such as particular spikes. This further demonstrates the model's ability to align the image and spectrum embeddings in the shared latent space.
 
+This search abilit can be useful in a variety of applications, such as seach for rare or unusual objects (see some examples of this in Ref.\cite{stein}). The results are largely consistent with the original work, although a direct comparison is difficult as the images and spectra chosen for queries are random. It is worth noting that our results are achieved using a much smaller model the original work, but yields (visually) similar results.
 
 \begin{figure}[H]
     \centering
@@ -265,14 +273,14 @@ In this section, we present our results from the AstroCLIP reproduction. Where a
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{../figures/spectral_retrieval_im_im_1}
-        \caption{Caption for im\_im\_1}
+        \caption{$S_C(\mathbf{z}_q^{im}, \mathbf{z}_j^{im})$}
         \label{fig:im_im_1}
     \end{subfigure}%
     \hfill
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{../figures/spectral_retrieval_im_im_2}
-        \caption{Caption for im\_im\_2}
+        \caption{$S_C(\mathbf{z}_q^{im}, \mathbf{z}_j^{im})$}
         \label{fig:im_im_2}
     \end{subfigure}
 
@@ -280,14 +288,14 @@ In this section, we present our results from the AstroCLIP reproduction. Where a
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{../figures/spectral_retrieval_im_sp_1}
-        \caption{Caption for im\_sp\_1}
+        \caption{$S_C(\mathbf{z}_q^{sp}, \mathbf{z}_j^{im})$}
         \label{fig:im_sp_1}
     \end{subfigure}%
     \hfill
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{../figures/spectral_retrieval_im_sp_2}
-        \caption{Caption for im\_sp\_2}
+        \caption{$S_C(\mathbf{z}_q^{sp}, \mathbf{z}_j^{im})$}
         \label{fig:im_sp_2}
     \end{subfigure}
 
@@ -295,14 +303,14 @@ In this section, we present our results from the AstroCLIP reproduction. Where a
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{../figures/spectral_retrieval_sp_im_1}
-        \caption{Caption for sp\_im\_1}
+        \caption{$S_C(\mathbf{z}_q^{im}, \mathbf{z}_j^{sp})$}
         \label{fig:sp_im_1}
     \end{subfigure}%
     \hfill
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{../figures/spectral_retrieval_sp_im_2}
-        \caption{Caption for sp\_im\_2}
+        \caption{$S_C(\mathbf{z}_q^{im}, \mathbf{z}_j^{sp})$}
         \label{fig:sp_im_2}
     \end{subfigure}
 
@@ -310,124 +318,25 @@ In this section, we present our results from the AstroCLIP reproduction. Where a
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{../figures/spectral_retrieval_sp_sp_1}
-        \caption{Caption for sp\_sp\_1}
+        \caption{$S_C(\mathbf{z}_q^{sp}, \mathbf{z}_j^{sp})$}
         \label{fig:sp_sp_1}
     \end{subfigure}%
     \hfill
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{../figures/spectral_retrieval_sp_sp_2}
-        \caption{Caption for sp\_sp\_2}
+        \caption{$S_C(\mathbf{z}_q^{sp}, \mathbf{z}_j^{sp})$}
         \label{fig:sp_sp_2}
     \end{subfigure}
 
-    \caption{Overall caption for all images.}
+    \caption{Spectral retrieval for random query galaxies in the validation set. The top 5 most similar spectra are shown for each query galaxy, pictured in each graph. This was done using image-image search for (\ref{fig:im_im_1}) (\ref{fig:im_im_2}), image-spectrum search for (\ref{fig:im_sp_1}) (\ref{fig:im_sp_2}), spectrum-image search for (\ref{fig:sp_im_1}) (\ref{fig:sp_im_2}) and spectrum-spectrum search for (\ref{fig:sp_sp_1}) (\ref{fig:sp_sp_2}).}
     \label{fig:spectral_retrieval}
 \end{figure}
 
 
 \subsection{Zero Shot Prediction of Physical Properties}
+We present the results of the zero-shot prediction of redshift and stella
 
-% % First Figure: Zero-shot Redshift
-% \begin{figure}[H]
-%     \centering
-%     \begin{subfigure}[b]{0.32\textwidth}
-%         \centering
-%         \includegraphics[width=\textwidth]{../figures/zeroshot_redshift_crossmodal.png}
-%         \caption{Crossmodal}
-%         \label{fig:redshift_crossmodal}
-%     \end{subfigure}%
-%     \hfill
-%     \begin{subfigure}[b]{0.32\textwidth}
-%         \centering
-%         \includegraphics[width=\textwidth]{../figures/zeroshot_redshift_image.png}
-%         \caption{Image}
-%         \label{fig:redshift_image}
-%     \end{subfigure}%
-%     \hfill
-%     \begin{subfigure}[b]{0.32\textwidth}
-%         \centering
-%         \includegraphics[width=\textwidth]{../figures/zeroshot_redshift_spectrum.png}
-%         \caption{Spectrum}
-%         \label{fig:redshift_spectrum}
-%     \end{subfigure}
-%     \caption{Visualizations for zero-shot redshift estimation.}
-%     \label{fig:redshift}
-% \end{figure}
-
-% % Second Figure: Zero-shot Stellarmass
-% \begin{figure}[H]
-%     \centering
-%     \begin{subfigure}[b]{0.32\textwidth}
-%         \centering
-%         \includegraphics[width=\textwidth]{../figures/zeroshot_stellarmass_crossmodal.png}
-%         \caption{Crossmodal}
-%         \label{fig:stellarmass_crossmodal}
-%     \end{subfigure}%
-%     \hfill
-%     \begin{subfigure}[b]{0.32\textwidth}
-%         \centering
-%         \includegraphics[width=\textwidth]{../figures/zeroshot_stellarmass_image.png}
-%         \caption{Image}
-%         \label{fig:stellarmass_image}
-%     \end{subfigure}%
-%     \hfill
-%     \begin{subfigure}[b]{0.32\textwidth}
-%         \centering
-%         \includegraphics[width=\textwidth]{../figures/zeroshot_stellarmass_spectrum.png}
-%         \caption{Spectrum}
-%         \label{fig:stellarmass_spectrum}
-%     \end{subfigure}
-%     \caption{Visualizations for zero-shot stellar mass estimation.}
-%     \label{fig:stellarmass}
-% \end{figure}
-
-% % Zero-shot Stellarmass: Images in a column with captions on the right
-% \begin{figure}[H]
-%     \centering
-%     \begin{subfigure}[b]{\textwidth}
-%         \begin{minipage}[c]{0.50\textwidth}
-%             \centering
-%             \includegraphics[width=\textwidth]{../figures/zeroshot_stellarmass_crossmodal.png}
-%         \end{minipage}%
-%         \hfill
-%         \begin{minipage}[c]{0.50\textwidth}
-%             \caption{Crossmodal-Regression}
-%             \label{fig:stellarmass_crossmodal}
-%         \end{minipage}
-%     \end{subfigure}
-
-%     \vspace{1cm} % Space between rows
-
-%     \begin{subfigure}[b]{\textwidth}
-%         \begin{minipage}[c]{0.50\textwidth}
-%             \centering
-%             \includegraphics[width=\textwidth]{../figures/zeroshot_stellarmass_image.png}
-%         \end{minipage}%
-%         \hfill
-%         \begin{minipage}[c]{0.50\textwidth}
-%             \caption{Image Embeddings Regression}
-%             \label{fig:stellarmass_image}
-%         \end{minipage}
-%     \end{subfigure}
-
-%     \vspace{1cm} % Space between rows
-
-%     \begin{subfigure}[b]{\textwidth}
-%         \begin{minipage}[c]{0.50\textwidth}
-%             \centering
-%             \includegraphics[width=\textwidth]{../figures/zeroshot_stellarmass_spectrum.png}
-%         \end{minipage}%
-%         \hfill
-%         \begin{minipage}[c]{0.50\textwidth}
-%             \caption{Spectrum Embeddings Regression}
-%             \label{fig:stellarmass_spectrum}
-%         \end{minipage}
-%     \end{subfigure}
-
-%     \caption{Comprehensive visualization of zero-shot stellar mass estimation using various modalities.}
-%     \label{fig:stellarmass}
-% \end{figure}
 
 \begin{figure}[H]
     \centering
