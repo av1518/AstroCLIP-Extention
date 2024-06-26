@@ -726,7 +726,7 @@ plt.text(
 plt.savefig("figures/zeroshot_stellarmass_spectrum.png", bbox_inches="tight", dpi=400)
 plt.show()
 
-# %% Cross-modal similarity
+# %% Cross-modal KNN for stellar mass prediction
 split = 5000
 neigh = KNeighborsRegressor(weights="distance", n_neighbors=16)
 neigh.fit(

@@ -49,87 +49,175 @@ provabgs = provabgs[np.random.permutation(len(provabgs))]
 # Create a UMAP of the spectra embeddings
 umap_sp = umap.UMAP()
 emb_map_sp = umap_sp.fit_transform(provabgs["spectrum_embedding"])
-# %%
-# plot the umap
-plt.figure(figsize=(20, 8))
 
-# Plot the UMAP of spectrum embeddings
-plt.subplot(1, 2, 1)
-plt.scatter(
-    emb_map_sp[:, 0],
-    emb_map_sp[:, 1],
-    c=provabgs["PROVABGS_LOGMSTAR_BF"],
-    cmap="viridis",
-    s=2,
-    alpha=0.5,
-)
-plt.colorbar(label=r"$logM*$")
-plt.xlabel("UMAP 1")
-plt.ylabel("UMAP 2")
-plt.title("UMAP of the spectrum embeddings")
+# Plot the UMAP
+plt.figure(figsize=(20, 8), dpi=500)
+
+# Plot the UMAP of spectrum embeddings with logMstar as the color
 
 # Plot the UMAP of spectrum embeddings with redshift as the color
-plt.subplot(1, 2, 2)
-plt.scatter(
+plt.subplot(1, 2, 1)
+sc1 = plt.scatter(
     emb_map_sp[:, 0],
     emb_map_sp[:, 1],
     c=provabgs["Z_HP"],
-    cmap="plasma",
-    s=2,
-    alpha=0.5,
-)
-plt.colorbar(label="Redshift [units]")
-plt.xlabel("UMAP 1")
-plt.ylabel("UMAP 2")
-plt.title("UMAP of the spectrum embeddings")
-
-plt.tight_layout()
-plt.show()
-
-
-# %% Umap of the image embeddings
-umap_im = umap.UMAP()
-emb_map_im = umap_im.fit_transform(provabgs["image_embedding"])
-
-# %% Umap of the image embeddings
-umap_im = umap.UMAP()
-emb_map_im = umap_im.fit_transform(provabgs["image_embedding"])
-
-# plot the umap
-plt.figure(figsize=(20, 8))
-
-# Plot the UMAP of image embeddings with log(M*) as the color
-plt.subplot(1, 2, 1)
-plt.scatter(
-    emb_map_im[:, 0],
-    emb_map_im[:, 1],
-    c=provabgs["PROVABGS_LOGMSTAR_BF"],
     cmap="viridis",
     s=2,
     alpha=0.5,
 )
-plt.colorbar(label="log(M*)")
-plt.xlabel("UMAP 1")
-plt.ylabel("UMAP 2")
-plt.title("UMAP of the image embeddings")
+plt.xlabel("UMAP 1", fontsize=18)
+plt.ylabel("UMAP 2", fontsize=18)
 
-# Plot the UMAP of image embeddings with redshift as the color
+# turn off values on the x and y axis
+plt.xticks([])
+plt.yticks([])
+# plt.title("UMAP of Spectrum Embeddings with Redshift")
+cbar1 = plt.colorbar(sc1, ax=plt.gca(), orientation="vertical", aspect=30)
+cbar1.set_label(r"Redshift $Z_{HP}$", fontsize=14)
+cbar1.ax.tick_params(labelsize=15)
+
 plt.subplot(1, 2, 2)
-plt.scatter(
-    emb_map_im[:, 0],
-    emb_map_im[:, 1],
-    c=provabgs["Z_HP"],
-    cmap="plasma",
+sc2 = plt.scatter(
+    emb_map_sp[:, 0],
+    emb_map_sp[:, 1],
+    c=provabgs["PROVABGS_LOGMSTAR_BF"],
+    cmap="magma",
     s=2,
     alpha=0.5,
 )
-plt.colorbar(label="redshift")
-plt.xlabel("UMAP 1")
-plt.ylabel("UMAP 2")
-plt.title("UMAP of the image embeddings")
+plt.xlabel("UMAP 1", fontsize=18)
+plt.ylabel("UMAP 2", fontsize=18)
 
+plt.xticks([])
+plt.yticks([])
+
+# plt.title("UMAP of Spectrum Embeddings with logMstar")
+cbar2 = plt.colorbar(sc2, ax=plt.gca(), orientation="vertical", aspect=30)
+cbar2.set_label(r"Stellar Mass $\log M_{*}$", fontsize=14)
+cbar2.ax.tick_params(labelsize=15)
+
+plt.tick_params(axis="both", which="major", labelsize=15)
 plt.tight_layout()
+
+plt.savefig("figures/umap_spectra_heatmap.png", dpi=500, bbox_inches="tight")
+
 plt.show()
+
+# %% UMAP of the image embeddings
+umap_im = umap.UMAP()
+emb_map_im = umap_im.fit_transform(provabgs["image_embedding"])
+
+# Plot the UMAP
+plt.figure(figsize=(20, 8), dpi=500)
+
+# Plot the UMAP of image embeddings with redshift as the color
+plt.subplot(1, 2, 1)
+sc1 = plt.scatter(
+    emb_map_im[:, 0],
+    emb_map_im[:, 1],
+    c=provabgs["Z_HP"],
+    cmap="viridis",
+    s=2,
+    alpha=0.5,
+)
+plt.xlabel("UMAP 1", fontsize=18)
+plt.ylabel("UMAP 2", fontsize=18)
+
+# turn off values on the x and y axis
+plt.xticks([])
+plt.yticks([])
+cbar1 = plt.colorbar(sc1, ax=plt.gca(), orientation="vertical", aspect=30)
+cbar1.set_label(r"Redshift $Z_{HP}$", fontsize=14)
+cbar1.ax.tick_params(labelsize=15)
+
+# Plot the UMAP of image embeddings with log(M*) as the color
+plt.subplot(1, 2, 2)
+sc2 = plt.scatter(
+    emb_map_im[:, 0],
+    emb_map_im[:, 1],
+    c=provabgs["PROVABGS_LOGMSTAR_BF"],
+    cmap="magma",
+    s=2,
+    alpha=0.5,
+)
+plt.xlabel("UMAP 1", fontsize=18)
+plt.ylabel("UMAP 2", fontsize=18)
+
+plt.xticks([])
+plt.yticks([])
+
+cbar2 = plt.colorbar(sc2, ax=plt.gca(), orientation="vertical", aspect=30)
+cbar2.set_label(r"Stellar Mass $\log M_{*}$", fontsize=14)
+cbar2.ax.tick_params(labelsize=15)
+
+plt.tick_params(axis="both", which="major", labelsize=15)
+plt.tight_layout()
+
+plt.savefig("figures/umap_image_heatmap.png", dpi=500, bbox_inches="tight")
+
+plt.show()
+# %%
+import numpy as np
+
+# %% UMAP of both image and spectra embeddings
+umap_both = umap.UMAP()
+emb_map_both = umap_both.fit_transform(
+    np.concatenate(
+        [provabgs["image_embedding"], provabgs["spectrum_embedding"]], axis=1
+    )
+)
+
+# Plot the UMAP
+plt.figure(figsize=(20, 8), dpi=500)
+
+# Plot the UMAP of the image and spectra embeddings with redshift as the color
+plt.subplot(1, 2, 1)
+sc1 = plt.scatter(
+    emb_map_both[:, 0],
+    emb_map_both[:, 1],
+    c=provabgs["Z_HP"],
+    cmap="viridis",
+    s=2,
+    alpha=0.5,
+)
+plt.xlabel("UMAP 1", fontsize=18)
+plt.ylabel("UMAP 2", fontsize=18)
+
+# turn off values on the x and y axis
+plt.xticks([])
+plt.yticks([])
+cbar1 = plt.colorbar(sc1, ax=plt.gca(), orientation="vertical", aspect=30)
+cbar1.set_label(r"Redshift $Z_{HP}$", fontsize=14)
+cbar1.ax.tick_params(labelsize=15)
+
+# Plot the UMAP of the image and spectra embeddings with log(M*) as the color
+plt.subplot(1, 2, 2)
+sc2 = plt.scatter(
+    emb_map_both[:, 0],
+    emb_map_both[:, 1],
+    c=provabgs["PROVABGS_LOGMSTAR_BF"],
+    cmap="magma",
+    s=2,
+    alpha=0.5,
+)
+plt.xlabel("UMAP 1", fontsize=18)
+plt.ylabel("UMAP 2", fontsize=18)
+
+plt.xticks([])
+plt.yticks([])
+
+cbar2 = plt.colorbar(sc2, ax=plt.gca(), orientation="vertical", aspect=30)
+cbar2.set_label(r"Stellar Mass $\log M_{*}$", fontsize=14)
+cbar2.ax.tick_params(labelsize=15)
+
+plt.tick_params(axis="both", which="major", labelsize=15)
+plt.tight_layout()
+
+plt.savefig("figures/umap_both_heatmap.png", dpi=500, bbox_inches="tight")
+
+plt.show()
+
+
 # %% Clustering the UMAP of image embeddings
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
@@ -156,12 +244,14 @@ plt.show()
 # Choose the optimal number of clusters based on the silhouette score
 optimal_k = k_values[np.argmax(sil_scores)]
 print(f"Optimal number of clusters: {optimal_k}")
+# %%
+
+n_clusters = 6
 
 # Apply K-Means with the optimal number of clusters
-kmeans = KMeans(n_clusters=optimal_k, random_state=42)
+kmeans = KMeans(n_clusters=n_clusters, random_state=42)
 cluster_labels = kmeans.fit_predict(emb_map_im)
 
-# %%
 # Plot the UMAP with cluster assignments
 plt.figure(figsize=(20, 8))
 
@@ -216,7 +306,7 @@ print(f"Number of clusters found in image embeddings: {n_clusters_im}")
 
 # %%
 # Plot the UMAP with DBSCAN cluster assignments
-plt.figure(figsize=(20, 8))
+plt.figure(figsize=(14, 8))
 
 unique_labels_sp = set(dbscan_labels_sp)
 colors_sp = [plt.cm.tab10(each) for each in np.linspace(0, 1, len(unique_labels_sp))]
@@ -239,7 +329,9 @@ for k, col in zip(unique_labels_sp, colors_sp):
 
 plt.xlabel("UMAP 1")
 plt.ylabel("UMAP 2")
-plt.title("UMAP of Spectrum Embeddings with DBSCAN Clusters")
+plt.xticks([])
+plt.yticks([])
+# plt.title("UMAP of Spectrum Embeddings with DBSCAN Clusters")
 plt.legend(markerscale=8, loc="best")
 
 unique_labels_im = set(dbscan_labels_im)
@@ -263,11 +355,73 @@ for k, col in zip(unique_labels_im, colors_im):
 
 plt.xlabel("UMAP 1")
 plt.ylabel("UMAP 2")
-plt.title("UMAP of Image Embeddings with DBSCAN Clusters")
+plt.xticks([])
+plt.yticks([])
+# plt.title("UMAP of Image Embeddings with DBSCAN Clusters")
 plt.legend(markerscale=8, loc="best")
 
 plt.tight_layout()
 plt.show()
+# %%
+# Plot the UMAP with DBSCAN cluster assignments
+plt.figure(figsize=(15, 8))
+
+unique_labels_sp = set(dbscan_labels_sp)
+colors_sp = [plt.cm.tab10(each) for each in np.linspace(0, 1, len(unique_labels_sp))]
+
+plt.subplot(1, 2, 1)
+for k, col in zip(unique_labels_sp, colors_sp):
+    if k == -1:
+        # Black used for noise.
+        col = [0, 0, 0, 1]
+
+    class_member_mask = dbscan_labels_sp == k
+    xy = emb_map_sp[class_member_mask]
+    plt.scatter(
+        xy[:, 0],
+        xy[:, 1],
+        s=2,
+        color=tuple(col),
+        label=f"Cluster {k + 1}" if k != -1 else "Noise",
+    )
+
+plt.xlabel("UMAP 1", fontsize=18)
+plt.ylabel("UMAP 2", fontsize=18)
+plt.xticks([])
+plt.yticks([])
+# plt.title("UMAP of Spectrum Embeddings with DBSCAN Clusters", fontsize=18)
+plt.legend(markerscale=8, loc="best", fontsize=15)
+
+unique_labels_im = set(dbscan_labels_im)
+colors_im = [plt.cm.tab10(each) for each in np.linspace(0, 1, len(unique_labels_im))]
+
+plt.subplot(1, 2, 2)
+for k, col in zip(unique_labels_im, colors_im):
+    if k == -1:
+        # Black used for noise.
+        col = [0, 0, 0, 1]
+
+    class_member_mask = dbscan_labels_im == k
+    xy = emb_map_im[class_member_mask]
+    plt.scatter(
+        xy[:, 0],
+        xy[:, 1],
+        s=2,
+        color=tuple(col),
+        label=f"Cluster {k + 1}" if k != -1 else "Noise",
+    )
+
+plt.xlabel("UMAP 1", fontsize=18)
+plt.ylabel("UMAP 2", fontsize=18)
+plt.xticks([])
+plt.yticks([])
+# plt.title("UMAP of Image Embeddings with DBSCAN Clusters", fontsize=18)
+plt.legend(markerscale=8, loc="best", fontsize=15)
+
+plt.tight_layout()
+plt.savefig("figures/umap_dbscan_clusters.png", dpi=500, bbox_inches="tight")
+plt.show()
+
 
 # %%
 
@@ -328,14 +482,14 @@ def plot_cluster_entries(cluster_indices, provabgs, num_samples=5):
 
 
 # Inspect islands in image UMAP
-cluster_label = 6  # Specify the cluster you want to inspect
+cluster_label = 2  # Specify the cluster you want to inspect
 cluster_indices = get_cluster_entries(cluster_label - 1, dbscan_labels_im, provabgs)
-plot_cluster_entries(cluster_indices, provabgs, num_samples=5)
+plot_cluster_entries(cluster_indices, provabgs, num_samples=15)
 print(f"Number of entries in cluster {cluster_label}: {len(cluster_indices)}")
 # %%
 # Inspect islands in spectrum UMAP
 # Inspect islands in image UMAP
-cluster_label = 5  # Specify the cluster you want to inspect
+cluster_label = 8  # Specify the cluster you want to inspect
 cluster_indices = get_cluster_entries(cluster_label - 1, dbscan_labels_sp, provabgs)
 plot_cluster_entries(cluster_indices, provabgs, num_samples=5)
 print(f"Number of entries in cluster {cluster_label}: {len(cluster_indices)}")

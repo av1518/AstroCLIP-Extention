@@ -12,6 +12,7 @@
 \usepackage{mathtools}
 \usepackage{amsmath}
 \usepackage{braket}
+\usepackage{multirow}
 %\usepackage[inline]{showlabels}
 \usepackage{adjustbox}
 \usepackage{caption}
@@ -24,6 +25,7 @@
 \usepackage{bm}
 \usepackage[a4paper,margin=2cm, marginparwidth=2cm]{geometry}
 
+\usepackage{adjustbox}
 
 
 \newcommand{\code}[1]{\mbox{%
@@ -197,7 +199,9 @@ This allows us to search the embedding space for both the image and spectrum emb
 
 
 \subsubsection*{Zero Shot Prediction of Physical Properties}
-To evaluate AstroCLIP's ability to predict physical properties of galaxies, we consider the task of predicting the catalogue-based redshift $\mathcal{Z}$ and stellar mass $M_{\star}$ of galaxies from the embedded galaxy representations. We use simple $k$-Nearest Neighbour ($k$-NN) our embedded images and spectra to predict the physical properties without any additional training or finetuning.  We do this by further splitting the 30K pairs in the validation set into a training and held-out test set. We then train a $k$-NN regressor on the new training set and evaluate its performance on the test set. We then instantiate the $KNeighborsRegressor$ with parameters set to \texttt{weights="distance"} and \texttt{n\_neighbors=16}. By setting \texttt{weights} to \texttt{"distance"}, the algorithm ensures that closer neighbors have a greater influence on the prediction, as their contributions are inversely proportional to their distances from the query point. This method allows us to calculate the predicted values for redshift and stellar mass as weighted averages of the target values of these nearest neighbors.
+To evaluate AstroCLIP's ability to predict physical properties of galaxies, we consider the task of predicting the catalogue-based redshift $\mathcal{Z}$ and stellar mass $M_{\star}$ of galaxies from the embedded galaxy representations. Each of the embeddings has a corresponding redshift and stellar mass value provided by the PROVABGS catalogue. These values are used as the ground truth for the prediction task, but note that they were not used in the training process. We then proceed by performing a simple $k$-Nearest Neighbour ($k$-NN) regression on the embedded representations to predict the redshift and stellar mass values. 
+%We use simple $k$-Nearest Neighbour ($k$-NN) our embedded images and spectra to predict the physical properties without any additional training or finetuning.  
+We do this by further splitting the 30K pairs in the validation set into a training and held-out test set. We then train a $k$-NN regressor on the new training set and evaluate its performance on the test set. We then instantiate the $KNeighborsRegressor$ with parameters set to \texttt{weights="distance"} and \texttt{n\_neighbors=16}. By setting \texttt{weights} to \texttt{"distance"}, the algorithm ensures that closer neighbors have a greater influence on the prediction, as their contributions are inversely proportional to their distances from the query point. This method allows us to calculate the predicted values for redshift and stellar mass as weighted averages of the target values of these nearest neighbors. 
 
 \subsubsection*{Visualisation and Clustering of the Embedding Space}
 
@@ -335,7 +339,35 @@ This search abilit can be useful in a variety of applications, such as seach for
 
 
 \subsection{Zero Shot Prediction of Physical Properties}
-We present the results of the zero-shot prediction of redshift and stella
+We present the results of the zero-shot prediction of redshift and stellar mass in Fig.\ref{fig:zeroshot}. These plots depict a scatterplot of the $k$-NN with 16 neighbours predictions against the ProvaBGS catalogue values for the validation set (grey points). A 2-D histogram ise also plotted with a heatmap help visualise the joint distribution of the two variables. Additionally, a Kerndel Density Estimate (KDE) plot is used to overlay cotnour lines (in black) that represent levels of density over the scatter plot. The coefficient of determination $R^2$ score is also calculated for each prediction, which is a measure on the proportion of variance that is explained by the model.
+
+The $k$-NN regression is performed for both in-modality and cross-modality regression; for in-modality, we refer to case of using the same modality embeddings (image embeddings or spectrum embeddings) for both trainign and predicting the physical properties, while for cross-modality, we refer to the case of using spectrum embeddings for training and image embeddings for predicting. 
+
+We can conclude that, similar to the original work, our embeddings give a strong zero-shot performance, indicating that the embedding space is able to organise itself around physically meaningful properties. The significanlty good performance even in the cross-modal case indicates that the neigbous in our embedded space indeed share physically meaningful features. Similar to the original work, the in-modality regression outperforms the cross-modality regression, which showcases that despite training under the objective of bringing the two modalities together, this causes the emergent property of sharing information across modalities, as it helps structure the embedding space within each modality. Even though redshift was not an information explicitly used in the training, the spectrum-spectrum regression for redshift is able to capture a very high 0.87 of the variance in the data. This means that redshift was used as a naturally emergent property which aided the spectrum encoder to structure the embedding space.
+
+Our reproduction results are consistent with the original work, but we note that we slightly underperform in all cases. This could be due to the smaller spectrum model used in our work. It could also be due to the model arhitecture itself, as the original work uses a transformer-based model which could capture a more nuanced representation of the spectra. Table \ref{tab:zeroshot} compares our results to the original work.
+
+
+% Please add the following required packages to your document preamble:
+% \usepackage{multirow}
+\begin{table}[H]
+    \begin{tabular}{clcc}
+    \hline
+    \textbf{Physical Property}    &                     & \begin{tabular}[c]{@{}c@{}}Original Work\\ $R^2$\end{tabular} & \begin{tabular}[c]{@{}c@{}}Our Reproduction\\ $R^2$\end{tabular} \\ \hline
+    \hline
+    \multirow{3}{*}{Redshift}     & Image Embeddings    & 0.71                                                          & 0.65                                                             \\
+                                  & Spectrum Embeddings & 0.97                                                          & 0.87                                                             \\
+                                  & Cross-Modal         & 0.64                                                          & 0.59                                                             \\ \hline
+    \multirow{3}{*}{Stellar Mass} & Image Embeddings    & 0.66                                                          & 0.57                                                             \\
+                                  & Spectrum Embeddings & 0.86                                                          & 0.74                                                             \\
+                                  & Cross-Modal         & 0.58                                                          & 0.50                                                             \\ \hline
+    \end{tabular}
+    \caption{Comparison of $R^2$ scores for zero-shot prediction of redshift and stellar mass between the original AstroCLIP paper and our reproduction. By Cross-modal, we refer to the case of using spectrum embeddings for training of $k$-NN regression and image embeddings for prediction. For in-modality, we refer to the case of using the same modality embeddings for both training and prediction.}
+    \label{tab:zeroshot}
+\end{table}
+
+
+
 
 
 \begin{figure}[H]
@@ -386,14 +418,23 @@ We present the results of the zero-shot prediction of redshift and stella
     \end{subfigure}
 
     \caption{Comparative visualizations of zero-shot redshift and stellar mass estimation across different embedding types.}
-    \label{fig:comparative_embeddings}
+    \label{fig:zeroshot}
 \end{figure}
 
 
 
+\section{Embedding Space Visualisation}
 
+\subsection{UMAP Projection}
 
-
+\begin{figure}[H]
+    \centering
+    \begin{adjustbox}{addcode={
+      \begin{minipage}{\width}}{
+      \end{minipage}},rotate=0,center}
+      \includegraphics[width=1.1\textwidth]{../figures/umap_spectra_heatmap.png} % 1.3x text width to extend into the margins
+    \end{adjustbox}
+\end{figure}
 
 
 

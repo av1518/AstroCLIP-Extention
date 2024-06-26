@@ -10,6 +10,7 @@ from sklearn.metrics import silhouette_score
 print("imports done")
 # %%
 # Load the embeddings
+print("loading embeddings")
 emb = np.load("data/embeddings-main.npz")
 source_images = emb["images"]
 im_embeddings = emb["im_embeddings"]
@@ -17,7 +18,8 @@ spectra = emb["spectra"]
 redshifts = emb["redshifts"]
 source_spec = emb["source_spec"]
 targetid = emb["targetid"]
-
+print("embeddings loaded")
+# %%
 provabgs = Table.read("C:\datasets_astroclip\BGS_ANY_full.provabgs.sv3.v0.hdf5")
 
 # join the provabgs table using the targetid
@@ -577,3 +579,5 @@ cluster_indices_dict = {
 # Call the function with the dictionary of cluster indices
 print("boxplot by cluster for spectrum embeddings")
 plot_boxplots_by_cluster(provabgs, cluster_indices_dict)
+
+# %%
