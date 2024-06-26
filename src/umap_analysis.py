@@ -10,6 +10,7 @@ from scipy.ndimage import gaussian_filter1d as smooth
 print("imports done")
 # %%
 # Load the embeddings
+print("loading embeddings")
 emb = np.load("data/embeddings-main.npz")
 source_images = emb["images"]
 im_embeddings = emb["im_embeddings"]
@@ -17,7 +18,10 @@ spectra = emb["spectra"]
 redshifts = emb["redshifts"]
 source_spec = emb["source_spec"]
 targetid = emb["targetid"]
+print("embeddings loaded")
+# %%
 
+print("loading PROVABGS table")
 provabgs = Table.read("C:\datasets_astroclip\BGS_ANY_full.provabgs.sv3.v0.hdf5")
 
 # join the provabgs table using the targetid
@@ -304,64 +308,7 @@ n_clusters_im = len(set(dbscan_labels_im)) - (1 if -1 in dbscan_labels_im else 0
 print(f"Number of clusters found in spectrum embeddings: {n_clusters_sp}")
 print(f"Number of clusters found in image embeddings: {n_clusters_im}")
 
-# %%
-# Plot the UMAP with DBSCAN cluster assignments
-plt.figure(figsize=(14, 8))
 
-unique_labels_sp = set(dbscan_labels_sp)
-colors_sp = [plt.cm.tab10(each) for each in np.linspace(0, 1, len(unique_labels_sp))]
-
-plt.subplot(1, 2, 1)
-for k, col in zip(unique_labels_sp, colors_sp):
-    if k == -1:
-        # Black used for noise.
-        col = [0, 0, 0, 1]
-
-    class_member_mask = dbscan_labels_sp == k
-    xy = emb_map_sp[class_member_mask]
-    plt.scatter(
-        xy[:, 0],
-        xy[:, 1],
-        s=2,
-        color=tuple(col),
-        label=f"Cluster {k + 1}" if k != -1 else "Noise",
-    )
-
-plt.xlabel("UMAP 1")
-plt.ylabel("UMAP 2")
-plt.xticks([])
-plt.yticks([])
-# plt.title("UMAP of Spectrum Embeddings with DBSCAN Clusters")
-plt.legend(markerscale=8, loc="best")
-
-unique_labels_im = set(dbscan_labels_im)
-colors_im = [plt.cm.tab10(each) for each in np.linspace(0, 1, len(unique_labels_im))]
-
-plt.subplot(1, 2, 2)
-for k, col in zip(unique_labels_im, colors_im):
-    if k == -1:
-        # Black used for noise.
-        col = [0, 0, 0, 1]
-
-    class_member_mask = dbscan_labels_im == k
-    xy = emb_map_im[class_member_mask]
-    plt.scatter(
-        xy[:, 0],
-        xy[:, 1],
-        s=2,
-        color=tuple(col),
-        label=f"Cluster {k + 1}" if k != -1 else "Noise",
-    )
-
-plt.xlabel("UMAP 1")
-plt.ylabel("UMAP 2")
-plt.xticks([])
-plt.yticks([])
-# plt.title("UMAP of Image Embeddings with DBSCAN Clusters")
-plt.legend(markerscale=8, loc="best")
-
-plt.tight_layout()
-plt.show()
 # %%
 # Plot the UMAP with DBSCAN cluster assignments
 plt.figure(figsize=(15, 8))
@@ -419,7 +366,7 @@ plt.yticks([])
 plt.legend(markerscale=8, loc="best", fontsize=15)
 
 plt.tight_layout()
-plt.savefig("figures/umap_dbscan_clusters.png", dpi=500, bbox_inches="tight")
+# plt.savefig("figures/umap_dbscan_clusters.png", dpi=500, bbox_inches="tight")
 plt.show()
 
 
@@ -468,7 +415,6 @@ def plot_cluster_entries(cluster_indices, provabgs, num_samples=5):
         axes[i, 0].axis("off")
 
         # Plot the spectrum
-        print(l.shape, spectrum.shape)
         axes[i, 1].plot(l, spectrum, alpha=0.5, label="Raw Spectrum", color="gray")
         axes[i, 1].plot(l, smooth(spectrum, 2))
         axes[i, 1].set_xlabel(r"$\lambda [\AA]$")
@@ -481,15 +427,144 @@ def plot_cluster_entries(cluster_indices, provabgs, num_samples=5):
     plt.show()
 
 
+def plot_cluster_images(cluster_label, dbscan_labels, provabgs, num_images=8):
+    """
+    Plots the images of the selected cluster entries in rows of 4.
+
+    Parameters:
+    - cluster_label: The label of the cluster to extract.
+    - dbscan_labels: The array of cluster labels from DBSCAN.
+    - provabgs: The astropy table containing the data.
+    - num_images: The number of images to plot.
+    """
+    cluster_indices = np.where(dbscan_labels == cluster_label)[0]
+
+    # Ensure we don't try to plot more images than we have
+    num_images = min(num_images, len(cluster_indices))
+    selected_indices = np.random.choice(cluster_indices, num_images, replace=False)
+
+    # Determine the number of rows needed to display 4 images per row
+    num_rows = (num_images + 3) // 4  # Adding 3 ensures rounding up for any remainder
+
+    fig, axes = plt.subplots(num_rows, 4, figsize=(20, num_rows * 5))
+
+    for i, idx in enumerate(selected_indices):
+        entry = provabgs[idx]
+        image = entry["source_image"]
+
+        row = i // 4
+        col = i % 4
+
+        axes[row, col].imshow(image, cmap="gray")
+        axes[row, col].axis("off")
+
+    # Hide any remaining empty subplots
+    for j in range(i + 1, num_rows * 4):
+        row = j // 4
+        col = j % 4
+        axes[row, col].axis("off")
+
+    # set the cluster label as the title
+    # fig.suptitle(f"DBScan Cluster {cluster_label + 1}", fontsize=16)
+    plt.tight_layout()
+    plt.show()
+
+
 # Inspect islands in image UMAP
-cluster_label = 2  # Specify the cluster you want to inspect
+cluster_label = 6  # Specify the cluster you want to inspect
 cluster_indices = get_cluster_entries(cluster_label - 1, dbscan_labels_im, provabgs)
-plot_cluster_entries(cluster_indices, provabgs, num_samples=15)
+plot_cluster_entries(cluster_indices + 1, provabgs, num_samples=5)
+plot_cluster_images(cluster_label - 1, dbscan_labels_im, provabgs, num_images=16)
 print(f"Number of entries in cluster {cluster_label}: {len(cluster_indices)}")
 # %%
 # Inspect islands in spectrum UMAP
 # Inspect islands in image UMAP
-cluster_label = 8  # Specify the cluster you want to inspect
+cluster_label = 7  # Specify the cluster you want to inspect
 cluster_indices = get_cluster_entries(cluster_label - 1, dbscan_labels_sp, provabgs)
 plot_cluster_entries(cluster_indices, provabgs, num_samples=5)
+plot_cluster_images(cluster_label - 1, dbscan_labels_sp, provabgs, num_images=16)
 print(f"Number of entries in cluster {cluster_label}: {len(cluster_indices)}")
+
+# %%
+# plot the image embeddings and the dbscan labels for the image embeddings
+
+# Plot the UMAP with DBSCAN cluster assignments for image embeddings
+plt.figure(figsize=(15, 15))
+
+unique_labels_im = set(dbscan_labels_im)
+colors_im = [plt.cm.tab10(each) for each in np.linspace(0, 1, len(unique_labels_im))]
+
+for k, col in zip(unique_labels_im, colors_im):
+    if k == -1:
+        # Black used for noise.
+        col = [0, 0, 0, 1]
+
+    class_member_mask = dbscan_labels_im == k
+    xy = emb_map_im[class_member_mask]
+    plt.scatter(
+        xy[:, 0],
+        xy[:, 1],
+        s=8,
+        color=tuple(col),
+        label=f"Cluster {k + 1}" if k != -1 else "Noise",
+    )
+
+plt.xlabel("UMAP 1", fontsize=18)
+plt.ylabel("UMAP 2", fontsize=18)
+plt.xticks([])
+plt.yticks([])
+# plt.title("UMAP of Image Embeddings with DBSCAN Clusters", fontsize=18)
+plt.legend(markerscale=8, loc="best", fontsize=15)
+
+plt.tight_layout()
+plt.savefig("figures/umap_of_images_dbscan_alone.png", dpi=500, bbox_inches="tight")
+plt.show()
+
+# %%
+
+
+def plot_noise_images(dbscan_labels, provabgs, num_images=8):
+    """
+    Plots the images of the noise entries detected by DBSCAN in rows of 4.
+
+    Parameters:
+    - dbscan_labels: The array of cluster labels from DBSCAN.
+    - provabgs: The astropy table containing the data.
+    - num_images: The number of images to plot.
+    """
+    # Get the indices of noise points
+    noise_indices = np.where(dbscan_labels == -1)[0]
+
+    # Ensure we don't try to plot more images than we have
+    num_images = min(num_images, len(noise_indices))
+    selected_indices = np.random.choice(noise_indices, num_images, replace=False)
+
+    # Determine the number of rows needed to display 4 images per row
+    num_rows = (num_images + 3) // 4  # Adding 3 ensures rounding up for any remainder
+
+    fig, axes = plt.subplots(num_rows, 4, figsize=(20, num_rows * 5))
+
+    for i, idx in enumerate(selected_indices):
+        entry = provabgs[idx]
+        image = entry["source_image"]
+
+        row = i // 4
+        col = i % 4
+
+        axes[row, col].imshow(image, cmap="gray")
+        axes[row, col].axis("off")
+
+    # Hide any remaining empty subplots
+    for j in range(i + 1, num_rows * 4):
+        row = j // 4
+        col = j % 4
+        axes[row, col].axis("off")
+
+    # Set the title
+    fig.suptitle("Noise Images", fontsize=16)
+    plt.tight_layout()
+    plt.show()
+
+
+# Example usage
+plot_noise_images(dbscan_labels_im, provabgs, num_images=16)
