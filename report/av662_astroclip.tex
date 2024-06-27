@@ -423,21 +423,78 @@ Our reproduction results are consistent with the original work, but we note that
 
 
 
-\section{Embedding Space Visualisation}
+\section{Embedding Space Clustering}
+As an extension to the original work, we visualise the embedding space and subsequently use clustering techniques to further examine how the model structures the data. 
 
-\subsection{UMAP Projection}
+Fig.\ref{fig:umap_of_spectra} shows the UMAP projection of the spectrum embeddings, coloured by their catalogued redshift values $Z_{HP}$ on the left and stellar mass values $M_{\star}$ on the right. The projection reveals a clear structure, where low redshift galaxies are clustered in the lower left corner, rising to higher redshifts as we move to the upper right corner. The same pattern is present in the stellar mass plot. This again illustrates the emergent behaviour of the model to structure the embedding space around physically meaningful properties, despite not being explicitly trained on these properties. 
+
 
 \begin{figure}[H]
     \centering
     \begin{adjustbox}{addcode={
       \begin{minipage}{\width}}{
       \end{minipage}},rotate=0,center}
-      \includegraphics[width=1.1\textwidth]{../figures/umap_spectra_heatmap.png} % 1.3x text width to extend into the margins
+      \includegraphics[width=1.15\textwidth]{../figures/umap_spectra_heatmap.png} % 1.3x text width to extend into the margins
     \end{adjustbox}
+    \caption{UMAP projection of the spectrum embeddings coloured by redshift $Z_{HP}$ (left) and stellar mass $M_{\star}$ (right). The projection reveals a clear structure for both projections, where low redshift and stellar mass galaxies are clustered in the lower left corner, rising to higher values as we move to the upper right corner.}
+    \label{fig:umap_of_spectra}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{adjustbox}{addcode={
+      \begin{minipage}{\width}}{
+      \end{minipage}},rotate=0,center}
+      \includegraphics[width=1.15\textwidth]{../figures/umap_image_heatmap.png} % 1.3x text width to extend into the margins
+    \end{adjustbox}
+    \caption{UMAP projection of the image embeddings coloured by redshift $Z_{HP}$ (left) and stellar mass $M_{\star}$ (right). The projection reveals a clear structure for both projections, where low redshift and stellar mass galaxies are clustered in the lower left corner, rising to higher values as we move to the upper right corner.}
+    \label{fig:umap_of_images}
 \end{figure}
 
 
+\begin{figure}[H]
+    \centering
+    \begin{adjustbox}{addcode={
+      \begin{minipage}{\width}}{
+      \end{minipage}},rotate=0,center}
+      \includegraphics[width=1.15\textwidth]{../figures/umap_both_heatmap.png}
+    \end{adjustbox}
+    \caption{UMAP projection of the image embeddings coloured by redshift $Z_{HP}$ (left) and stellar mass $M_{\star}$ (right). The projection reveals a clear structure for both projections, where low redshift and stellar mass galaxies are clustered in the lower left corner, rising to higher values as we move to the upper right corner.}
+    \label{fig:umap_of_both}
+\end{figure}
 
+Fig.\ref{fig:umap_of_images} and Fig.\ref{fig:umap_of_both} show the UMAP projection of the image embeddings and the combined image-spectrum embeddings, respectively. Similarly to the spectrum embeddings, we again see this clear structuring in the embedding space, with one difference: these mapping include a large `island' of galaxies that does not contain particular property values. Rather, it largely follows a similar pattern to the main `island', indicating this break-off is caused by some other property.
+
+
+% To further examine this and other potential islands, we use DBScan to directly cluster the UMAP projection. The clusters are illustrated in Fig.\ref{fig:umap_DBSCAN}
+
+% \begin{figure}[H]
+%     \centering
+%     \begin{adjustbox}{addcode={
+%       \begin{minipage}{\width}}{
+%       \end{minipage}},rotate=0,center}
+%       \includegraphics[width=1.15\textwidth]{../figures/umap_dbscan_clusters.png}
+%     \end{adjustbox}
+%     \caption{UMAP projection of the spectrum embeddings (left) and image embeddings (right) coloured by the DBScan clustering.}
+%     \label{fig:umap_DBSCAN}
+% \end{figure}
+
+To further examine this and other potential islands, we use DBScan to directly cluster the UMAP projection of the image embeddings. We set $\epsilon = 0.20$ and the minimum number of samples to 5. These were chosen by trial and error to produce a reasonable number of clusters in both the image and spectrum embeddings, with a reasonable number of galaxies in each. We then draw sample galaxies for each cluster to visually inspect. The clusters for the image embeddings are illustrated in Fig.\ref{fig:umap_DBSCAN}.
+
+We reveal that the image embedder has successfully separated galaxy images that contain artifacts such as [fix] into a distinct embedding island (Cluster 2). The galaxies contained in those images have variable redshifts and stellar masses, and are follow the same distribution as the main island. We further display 3 more islands. This is potentially a useful feature for quickly identifying artifacts in galaxy catalogues. Cluster 3 and 4 contain galaxies that largely fill the image, are mostly spiral and have high brightness. This indicates that model is able to separate galaxies based on their morphology, which is a key feature in galaxy classification. It is important to note that although we are looking at the image embeddings, these are informed by the spectrum embeddings, which means that it contains information about the galaxy's spectrum as well.
+
+\begin{figure}[H]
+    \centering
+    \begin{adjustbox}{addcode={
+      \begin{minipage}{\width}}{
+      \end{minipage}},rotate=0,center}
+      \includegraphics[width=1.15\textwidth]{../figures/dbscan_image_clusters_shown.pdf}
+    \end{adjustbox}
+    \caption{UMAP projection of the image embeddings coloured by the DBScan clustering.}
+    \label{fig:umap_DBSCAN}
+\end{figure}
+
+It is important to note that although we could be looking the image embeddings in isolation, these are informed by the spectrum embeddings, which means that it contains information about the galaxy's spectrum as well. We illustrate this 
 
 
 
