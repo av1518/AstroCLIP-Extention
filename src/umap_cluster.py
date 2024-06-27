@@ -210,7 +210,7 @@ kmeans_clusters_sp = kmeans.fit_predict(provabgs["spectrum_embedding"])
 # # Add the cluster labels to table
 provabgs["kmeans_cluster_sp"] = kmeans_clusters_sp
 
-plt.figure(figsize=(10, 8))
+plt.figure(figsize=(10, 8), dpi=500)
 plt.scatter(
     emb_map_sp[:, 0],
     emb_map_sp[:, 1],
@@ -237,8 +237,112 @@ plt.ylabel("UMAP 2")
 plt.title("K-Means Clusters in UMAP Space (Spectra Embeddings)")
 plt.show()
 
+# %%
+
 # Get the silhouette score for the clustering
 silhouette_score(provabgs["spectrum_embedding"], kmeans_clusters_sp)
+# %%
+from scipy.ndimage import gaussian_filter1d as smooth
+import matplotlib.pyplot as plt
+import numpy as np
+
+from scipy.ndimage import gaussian_filter1d as smooth
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+def plot_cluster_spectra(cluster_label, kmeans_labels, provabgs, num_spectra=5):
+    """
+    Plots the spectra of the selected cluster entries.
+
+    Parameters:
+    - cluster_label: The label of the cluster to extract.
+    - kmeans_labels: The array of cluster labels from KMeans.
+    - provabgs: The astropy table containing the data.
+    - num_spectra: The number of spectra to plot.
+    """
+    cluster_indices = np.where(kmeans_labels == cluster_label)[0]
+
+    # Ensure we don't try to plot more spectra than we have
+    num_spectra = min(num_spectra, len(cluster_indices))
+    selected_indices = np.random.choice(cluster_indices, num_spectra, replace=False)
+
+    plt.figure(figsize=(4, 4))
+
+    l = np.linspace(3586.7408577, 10372.89543574, source_spec.shape[1])
+
+    for idx in selected_indices:
+        entry = provabgs[idx]
+        spectrum = entry["source_spec"][:, 0]
+
+        # Plot the spectrum
+        plt.plot(l, smooth(spectrum, 6), alpha=0.6)
+
+    plt.xlabel(r"$\lambda [\AA]$")
+    plt.ylabel("Flux")
+    plt.title(f"Spectra of Cluster {cluster_label}")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_cluster_images(cluster_label, kmeans_labels, provabgs, num_images=8):
+    """
+    Plots the images of the selected cluster entries in rows of 4.
+
+    Parameters:
+    - cluster_label: The label of the cluster to extract.
+    - kmeans_labels: The array of cluster labels from KMeans.
+    - provabgs: The astropy table containing the data.
+    - num_images: The number of images to plot.
+    """
+    cluster_indices = np.where(kmeans_labels == cluster_label)[0]
+
+    # Ensure we don't try to plot more images than we have
+    num_images = min(num_images, len(cluster_indices))
+    selected_indices = np.random.choice(cluster_indices, num_images, replace=False)
+
+    # Determine the number of rows needed to display 4 images per row
+    num_rows = (num_images + 3) // 4  # Adding 3 ensures rounding up for any remainder
+
+    fig, axes = plt.subplots(num_rows, 4, figsize=(20, num_rows * 5))
+
+    for i, idx in enumerate(selected_indices):
+        entry = provabgs[idx]
+        image = entry["source_image"]
+
+        row = i // 4
+        col = i % 4
+
+        axes[row, col].imshow(image, cmap="gray")
+        axes[row, col].axis("off")
+
+    # Hide any remaining empty subplots
+    for j in range(i + 1, num_rows * 4):
+        row = j // 4
+        col = j % 4
+        axes[row, col].axis("off")
+
+    # Set the title
+    fig.suptitle(f"Images of Cluster {cluster_label}", fontsize=16)
+    plt.tight_layout()
+    plt.show()
+
+
+# Example usage
+cluster_label = 2  # Specify the cluster you want to inspect
+plot_cluster_images(cluster_label, kmeans_clusters_sp, provabgs, num_images=12)
+
+
+# %%
+# Example usage
+cluster_label = 2  # Specify the cluster you want to inspect
+plot_cluster_spectra(cluster_label, kmeans_clusters_sp, provabgs, num_spectra=6)
+plot_cluster_spectra(3, kmeans_clusters_sp, provabgs, num_spectra=6)
+# %%
+cluster_num = 6
+plot_cluster_spectra(cluster_num, kmeans_clusters_sp, provabgs, num_spectra=9)
+plot_cluster_images(cluster_num, kmeans_clusters_sp, provabgs, num_images=16)
 
 
 # %%
