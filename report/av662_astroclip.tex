@@ -157,6 +157,12 @@ For experiments involving the prediction of physical properties from the embeddi
 \subsection{Pre-trained Image Embedder} 
 The pre-trained image embedder we used in this reconstruction was developed by Stein et. al. (2021a) \cite{stein}. It is based on the MoCo v2 framework \cite{mocov2}, and it uses a ResNet-50 backbone as the encoder network. The model was pre-trained on a curated subset of 3.5M galaxies sampled uniformly by $z$-bands magnitude from the DESI Legacy Survey. They authors use a single-modal contrastive learning SSL framework, where each image undergoes multiple stochastic augmentations to create two views of the same image. The augmentations include galactic extinction, random cropping, random rotation, size scaling, point-spread function blur, jittering and Gaussian noise addition. The model was then trained on a contrastive loss function to align the representations of the two views in the embedding space. 
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../figures/diagram_resnet.pdf}
+    \caption{Diagram ResNet50.}
+\end{figure}
+
 The model is publicly available and can be downloaded from the authors' GitHub repository. This model has 50 ResNet blocks that contain a batch normalisation opeartoin, followed by an activation function and a convolutional layer. It has a total of 28M parameters. We keep the convolutional layers frozen during constrastive training, and use the final fully connected layer as the trainable projection head. This amounts to 4.5M trainable parameters that are finetuned under InfoNCE loss. 
 
 
@@ -165,7 +171,7 @@ The model is publicly available and can be downloaded from the authors' GitHub r
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{../figures/diagram_spender.pdf}
+    \includegraphics[width=\textwidth]{../figures/diagram_spender_cropped.pdf} % 1.3x text width to extend into the margins
     \caption{The }
     \label{fig:spender}
 \end{figure}
