@@ -120,11 +120,24 @@ class AlternateSpender(nn.Module):
 
 class AstroCLIP(L.LightningModule):
     """
-    A class that loads the pretrained models, freezes all the layers except the last one in image encoder and is then trained using
-    CLIP loss
+    @brief A class that defines the unified AstroCLIP model. It loads pretrained
+    models, freezes all the layers except the last one in the image encoder, and is
+    then trained using CLIP loss.
+
+    This class is responsible for initialising the model, freezing layers, and defining
+    the training and validation steps. It also includes methods for configuring optimisers
+    and printing trainable parameters.
     """
 
     def __init__(self, image_encoder, spectrum_encoder, image_transforms, lr=5e-5):
+        """
+        @brief Constructor for the AstroCLIP class.
+
+        @param image_encoder The image encoder model.
+        @param spectrum_encoder The spectrum encoder model.
+        @param image_transforms The transformations to be applied to images.
+        @param lr Learning rate for the optimiser.
+        """
         super().__init__()
 
         self.image_transforms = image_transforms
@@ -188,7 +201,6 @@ class AstroCLIP(L.LightningModule):
         optimizer = torch.optim.Adam(
             self.parameters(), lr=self.lr, weight_decay=0.2
         )  # self.params fetches all the trainable parameters of the model
-        # scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=80, eta_min=5e-6)
         scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, patience=8)
         return {
             "optimizer": optimizer,

@@ -1,3 +1,5 @@
+# In this script, we use the trained AstriCLIP model to embed all the test set. We then use those embeddings to perform
+# retrieval tasks and zero-shot learning tasks. We also visualise the embeddings using PCA.
 # %% Use trained AstroCLIP model to embed entire dataset
 from tqdm import tqdm
 import torch
@@ -102,6 +104,8 @@ for batch in tqdm(testdata):
     stacked_images = np.stack(processed_images, axis=0)
     source_images.append(stacked_images)
 
+print("Embeddings done")
+
 # %%
 source_images = np.concatenate(source_images, axis=0)
 spectra = np.concatenate(spectra, axis=0)
@@ -109,9 +113,8 @@ im_embeddings = np.concatenate(im_embeddings, axis=0)
 redshifts = np.concatenate(redshifts, axis=0)
 source_spec = np.concatenate(source_spec, axis=0)
 targetids = np.concatenate(targetid, axis=0)
-
-print(source_images.shape, im_embeddings.shape, redshifts.shape)
-# %%
+# %% Save the embeddings
+print("Saving the embeddings")
 np.savez(
     "data/embeddings-main.npz",
     images=source_images,
@@ -121,8 +124,7 @@ np.savez(
     source_spec=source_spec,
     targetid=targetids,
 )
-# %%
-# Load the embeddings
+# %% Load the embeddings from saved files
 emb = np.load("data/embeddings-main.npz")
 source_images = emb["images"]
 im_embeddings = emb["im_embeddings"]
@@ -260,8 +262,8 @@ for n, i in enumerate(ind_queries):
             plt.title("Cross Image-Spectra\-Similarity")
 
 plt.subplots_adjust(wspace=0.0, hspace=0.3)
-plt.savefig("figures/retrievals_together.png", bbox_inches="tight", pad_inches=0)
-plt.show()
+#plt.savefig("figures/retrievals_together.png", bbox_inches="tight", pad_inches=0)
+# plt.show()
 # %% Plot each one separately
 fig_size = (9, 12)
 horizontal_space = -0.4  # No horizontal space between images in a row
@@ -279,7 +281,7 @@ def create_similarity_plot(results_key, title):
             ax.axis("off")
     plt.tight_layout(rect=[0, 0, 1, 0.95])  # Adjust rect if necessary for title
     plt.subplots_adjust(wspace=horizontal_space, hspace=vertical_space)
-    plt.savefig(f"figures/{results_key}.png", bbox_inches="tight", dpi=300)
+    #plt.savefig(f"figures/{results_key}.png", bbox_inches="tight", dpi=300)
     plt.show()
 
 
@@ -300,7 +302,7 @@ def show_query_images():
         )
         ax.add_patch(rect)
     plt.subplots_adjust(wspace=0, hspace=vertical_space)  # Match vertical spacing
-    plt.savefig("figures/query_images.png", bbox_inches="tight", dpi=300)
+    #plt.savefig("figures/query_images.png", bbox_inches="tight", dpi=300)
     plt.show()
 
 
@@ -496,110 +498,12 @@ plot_spectra_with_image(
 # %% visualise the embeddings
 from sklearn.decomposition import PCA
 from src.utils import scatter_plot_as_images
-from sklearn.neighbors import NearestNeighbors
-from matplotlib.pyplot import plot, ylim, title, legend
 
 im_pca = PCA(n_components=4).fit_transform(image_features)
 sp_pca = PCA(n_components=4).fit_transform(spectra_features)
 scatter_plot_as_images(im_pca, source_images, nx=30, ny=30)
 scatter_plot_as_images(sp_pca, source_images, nx=30, ny=30)
-
-
-# %% Nearest Neighbour retrieval
-"""
-ind_query = 4
-
-spectral_similarity = spectra_features[ind_query] @ spectra_features.T
-image_similarity = image_features[ind_query] @ image_features.T
-cross_image_similarity = image_features[ind_query] @ spectra_features.T
-cross_spectral_similarity = spectra_features[ind_query] @ image_features.T
-
-crop = CenterCrop(96)
-
-plt.figure(figsize=[15, 4])
-plt.subplot(121)
-plt.imshow(crop(torch.tensor(source_images[ind_query]).T).T)
-plt.title("Queried Image")
-plt.subplot(122)
-plt.plot(l, source_spec[ind_query], color="red", alpha=0.5)
-plt.title("Queried Spectrum")
-# plt.ylim(-0, 20)
-# %% Query with spectral similarity
-inds = np.argsort(spectral_similarity)[::-1]
-print("Query with spectral similarity:")
-for i in range(4):
-    plt.figure(figsize=[15, 4])
-    plt.subplot(121)
-    plt.imshow(crop(torch.tensor(source_images[inds[i]]).T).T)
-    if i == 0:
-        plt.title("Retrieved Image")
-    plt.subplot(122)
-    plt.plot(l, source_spec[inds[i]], color="red", alpha=0.5, label="Retrieved")
-    # plt.ylim(-0, 20)
-    plt.plot(l, source_spec[ind_query], color="grey", alpha=0.5, label="Query")
-
-    if i == 0:
-        plt.title("Retrieved Spectrum")
-
-    plt.legend()
-
-# %%  Query with image similarity
-print("Query with image similarity:")
-inds = np.argsort(image_similarity)[::-1]
-for i in range(4):
-    plt.figure(figsize=[15, 4])
-    plt.subplot(121)
-    plt.imshow(crop(torch.tensor(source_images[inds[i]]).T).T)
-    if i == 0:
-        plt.title("Retrieved Image")
-    plt.subplot(122)
-    plt.plot(l, source_spec[inds[i]], color="red", alpha=0.5, label="Retrieved")
-    # plt.ylim(-0, 20)
-    plt.plot(l, source_spec[ind_query], color="grey", alpha=0.5, label="Query")
-
-    if i == 0:
-        plt.title("Retrieved Spectrum")
-
-    plt.legend()
-
-# %% Query with cross similarity
-print("Query with image->spectrum similarity:")
-inds = np.argsort(cross_image_similarity)[::-1]
-for i in range(4):
-    plt.figure(figsize=[15, 4])
-    plt.subplot(121)
-    plt.imshow(crop(torch.tensor(source_images[inds[i]]).T).T)
-    if i == 0:
-        plt.title("Retrieved Image")
-    plt.subplot(122)
-    plt.plot(l, source_spec[inds[i]], color="red", alpha=0.5, label="Retrieved")
-    # plt.ylim(-0, 20)
-    plt.plot(l, source_spec[ind_query], color="grey", alpha=0.5, label="Query")
-
-    if i == 0:
-        plt.title("Retrieved Spectrum")
-
-    plt.legend()
-
-# %% Query with cross similarity
-print("Query with spectrum->image similarity:")
-inds = np.argsort(cross_spectral_similarity)[::-1]
-for i in range(4):
-    plt.figure(figsize=[15, 4])
-    plt.subplot(121)
-    plt.imshow(crop(torch.tensor(source_images[inds[i]]).T).T)
-    if i == 0:
-        plt.title("Retrieved Image")
-    plt.subplot(122)
-    plt.plot(l, source_spec[inds[i]], color="red", alpha=0.5, label="Retrieved")
-    # plt.ylim(-0, 20)
-    plt.plot(l, source_spec[ind_query], color="grey", alpha=0.5, label="Query")
-
-    if i == 0:
-        plt.title("Retrieved Spectrum")
-
-    plt.legend()
-"""
+#%%
 
 # %% Zero shot redshift prediction
 import warnings
@@ -681,7 +585,7 @@ plt.text(
     "$R^2$ score: %0.2f" % (r2_score(provabgs["PROVABGS_LOGMSTAR_BF"][-split:], preds)),
     fontsize=15,  # Increased font size for the added text
 )
-plt.savefig("figures/zeroshot_stellarmass_image.png", bbox_inches="tight", dpi=400)
+#plt.savefig("figures/zeroshot_stellarmass_image.png", bbox_inches="tight", dpi=400)
 plt.show()
 # %% Stellar mass zero shot prediction from spectra
 split = 5000
@@ -723,7 +627,7 @@ plt.text(
     "$R^2$ score: %0.2f" % (r2_score(provabgs["PROVABGS_LOGMSTAR_BF"][-split:], preds)),
     fontsize=15,
 )
-plt.savefig("figures/zeroshot_stellarmass_spectrum.png", bbox_inches="tight", dpi=400)
+#plt.savefig("figures/zeroshot_stellarmass_spectrum.png", bbox_inches="tight", dpi=400)
 plt.show()
 
 # %% Cross-modal KNN for stellar mass prediction
@@ -763,7 +667,7 @@ plt.text(
 
 plt.tick_params(axis="both", which="major", labelsize=12)
 
-plt.savefig("figures/zeroshot_stellarmass_crossmodal.png", bbox_inches="tight", dpi=400)
+#plt.savefig("figures/zeroshot_stellarmass_crossmodal.png", bbox_inches="tight", dpi=400)
 plt.show()
 
 # %% Redshift prediction from images
@@ -801,7 +705,7 @@ plt.text(
 
 plt.tick_params(axis="both", which="major", labelsize=12)
 
-plt.savefig("figures/zeroshot_redshift_image.png", bbox_inches="tight", dpi=400)
+#plt.savefig("figures/zeroshot_redshift_image.png", bbox_inches="tight", dpi=400)
 plt.show()
 # %% Redshift prediction from spectra
 split = 5000
@@ -837,7 +741,7 @@ plt.text(
     fontsize=15,
 )
 plt.tick_params(axis="both", which="major", labelsize=12)
-plt.savefig("figures/zeroshot_redshift_spectrum.png", bbox_inches="tight", dpi=400)
+#plt.savefig("figures/zeroshot_redshift_spectrum.png", bbox_inches="tight", dpi=400)
 plt.show()
 # %% Cross-modal redshift prediction
 split = 5000
@@ -873,6 +777,6 @@ plt.text(
     fontsize=15,
 )
 plt.tick_params(axis="both", which="major", labelsize=12)
-plt.savefig("figures/zeroshot_redshift_crossmodal.png", bbox_inches="tight", dpi=400)
+#plt.savefig("figures/zeroshot_redshift_crossmodal.png", bbox_inches="tight", dpi=400)
 plt.show()
 # %%

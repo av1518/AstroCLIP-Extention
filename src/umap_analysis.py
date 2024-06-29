@@ -57,8 +57,6 @@ emb_map_sp = umap_sp.fit_transform(provabgs["spectrum_embedding"])
 # Plot the UMAP
 plt.figure(figsize=(20, 8), dpi=500)
 
-# Plot the UMAP of spectrum embeddings with logMstar as the color
-
 # Plot the UMAP of spectrum embeddings with redshift as the color
 plt.subplot(1, 2, 1)
 sc1 = plt.scatter(
@@ -103,7 +101,7 @@ cbar2.ax.tick_params(labelsize=15)
 plt.tick_params(axis="both", which="major", labelsize=15)
 plt.tight_layout()
 
-plt.savefig("figures/umap_spectra_heatmap.png", dpi=500, bbox_inches="tight")
+# plt.savefig("figures/umap_spectra_heatmap.png", dpi=500, bbox_inches="tight")
 
 plt.show()
 
@@ -157,11 +155,10 @@ cbar2.ax.tick_params(labelsize=15)
 plt.tick_params(axis="both", which="major", labelsize=15)
 plt.tight_layout()
 
-plt.savefig("figures/umap_image_heatmap.png", dpi=500, bbox_inches="tight")
+# plt.savefig("figures/umap_image_heatmap.png", dpi=500, bbox_inches="tight")
 
 plt.show()
-# %%
-import numpy as np
+
 
 # %% UMAP of both image and spectra embeddings
 umap_both = umap.UMAP()
@@ -217,7 +214,7 @@ cbar2.ax.tick_params(labelsize=15)
 plt.tick_params(axis="both", which="major", labelsize=15)
 plt.tight_layout()
 
-plt.savefig("figures/umap_both_heatmap.png", dpi=500, bbox_inches="tight")
+# plt.savefig("figures/umap_both_heatmap.png", dpi=500, bbox_inches="tight")
 
 plt.show()
 
@@ -366,7 +363,7 @@ plt.yticks([])
 plt.legend(markerscale=8, loc="best", fontsize=15)
 
 plt.tight_layout()
-# plt.savefig("figures/umap_dbscan_clusters.png", dpi=500, bbox_inches="tight")
+# #plt.savefig("figures/umap_dbscan_clusters.png", dpi=500, bbox_inches="tight")
 plt.show()
 
 
@@ -517,7 +514,7 @@ plt.yticks([])
 plt.legend(markerscale=8, loc="best", fontsize=15)
 
 plt.tight_layout()
-plt.savefig("figures/umap_of_images_dbscan_alone.png", dpi=500, bbox_inches="tight")
+# plt.savefig("figures/umap_of_images_dbscan_alone.png", dpi=500, bbox_inches="tight")
 plt.show()
 
 # %%

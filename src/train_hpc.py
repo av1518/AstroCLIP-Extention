@@ -1,22 +1,18 @@
-# %
+# This script is used to train the AstroCLIP model on the HPC cluster.
+# %%
 import lightning as L
 from lightning.pytorch.callbacks import ModelCheckpoint
 import torch
 from datasets import load_dataset
 from pl_bolts.models.self_supervised import Moco_v2
-import torch.nn.functional as F
-import torch.optim.lr_scheduler as lr_scheduler
-from models import OutputExtractor, ExtendedSpender, AstroCLIP
+from models import OutputExtractor, AstroCLIP, AlternateSpender
 from torch.utils.data import Subset, DataLoader
 from torchvision.transforms import (
     Compose,
     RandomVerticalFlip,
     RandomHorizontalFlip,
     RandomRotation,
-    RandomErasing,
-    ToTensor,
     CenterCrop,
-    ToPILImage,
     InterpolationMode,
 )
 
@@ -25,7 +21,6 @@ from pytorch_lightning.loggers import WandbLogger
 
 
 print("imports done")
-
 wandb.login(key="a0dfc00d969fb01444f3bc945793545ba48f3673")
 # %% Get datasets
 
@@ -33,8 +28,8 @@ print("starting main")
 
 
 def main():
-    sp_layers = [6, 256, 1024, 1024, 1024, 1024, 256, 128]
-    lr = 1e-5
+    sp_layers = [256, 256, 256, 128]
+    lr = 5e-4
 
     torch.set_float32_matmul_precision("medium")
 
@@ -72,7 +67,7 @@ def main():
     im_encoder = OutputExtractor(backbone)
     print("image model loaded")
 
-    sp_encoder = ExtendedSpender(sp_layers=sp_layers)
+    sp_encoder = AlternateSpender(sp_layers=sp_layers)
     print("spectrum model loaded")
     # Setting up image augmentations
     image_transforms = Compose(
@@ -85,25 +80,24 @@ def main():
     )
 
     wandb_logger = WandbLogger(
-        log_model="all", project="astroclip", name=f"{sp_layers}, lr={lr}, hpc-1"
+        log_model="all",
+        project="astroclip",
+        name=f"{sp_layers}, lr={lr}, alt-cropped-validation",
     )
 
     model = AstroCLIP(im_encoder, sp_encoder, image_transforms, lr=lr)
 
     print("AstroCLIP model created")
 
-    sp_layers_str = "-".join(map(str, sp_layers))
-    lr_str = f"{lr:.1e}"  # Format learning rate in scientific notation
-
     trainer = L.Trainer(
-        max_epochs=50,
+        max_epochs=80,
         callbacks=[
             ModelCheckpoint(
                 every_n_epochs=1,
             )
         ],
         logger=wandb_logger,
-        log_every_n_steps=1,
+        log_every_n_steps=10,
     )
 
     print("Starting training")

@@ -3,7 +3,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-def get_logits(self, im_embedding, sp_embedding, temperature=15.5):  # for testing
+def get_logits(self, im_embedding, sp_embedding, temperature=15.5):
+    """
+    @brief Computes the cosine similarity matrix between image and spectrum embeddings.
+
+    This method is mostly used for debugging purposes. It normalises the image and spectrum embeddings
+    """
     im_embedding = F.normalize(im_embedding, dim=-1, eps=1e-3)
     sp_embedding = F.normalize(sp_embedding, dim=-1, eps=1e-3)
 
@@ -50,26 +55,3 @@ class CLIPLoss(nn.Module):
         if output_as_dict:
             return {"overall_contrastive_loss": total_loss}
         return total_loss
-
-        # def get_cosine_matrix(self, im_embedding, sp_embedding, temperature=15.5):
-
-    #     im_embedding = F.normalize(im_embedding, dim=-1, eps=1e-3)
-    #     sp_embedding = F.normalize(sp_embedding, dim=-1, eps=1e-3)
-
-    #     im_cos_matrix = temperature * torch.matmul(
-    #         im_embedding, sp_embedding.T
-    #     )  # ith image with jth spectrum
-    #     return im_cos_matrix, im_cos_matrix.T
-
-    # def forward(self, im_embedding, sp_embedding, temperature, output_dict=False):
-    #     im_cos_matrix, sp_cos_matrix = self.get_cosine_matrix(
-    #         im_embedding, sp_embedding, temperature
-    #     )
-    #     labels = torch.arange(
-    #         im_cos_matrix.shape[0], device=im_embedding.device, dtype=torch.long
-    #     )  # get labels for all the images in batch
-    #     total_loss = (
-    #         F.cross_entropy(im_cos_matrix, labels)
-    #         + F.cross_entropy(sp_cos_matrix, labels)
-    #     ) / 2
-    #     return {"contrastive_loss": total_loss} if output_dict else total_loss
