@@ -99,13 +99,15 @@ In this work, we reproduce and extend AstroCLIP - a cross-modal foundation model
 \end{itemize}
 We then extend the original work by further analysing the embedding space structure using clustering algorithms and dimensionality reduction techniques. In doing so, we empirically demonstrate that our cross-modal embeddings can capture semantically meaningful information about galaxies, which are aligned across the two modalities.
 
-ML research is currently experiencing a reproducibility crisis, with many studies difficult or even impossible to reproduce \cite{kapoor2023leakage}. Often, this is the case due to unpublished data or source-code, or due to subtle sensitivities in the training process that are not documented. Additionally, ML code tends to be complex and as of yet lacks the standardisation of other scientific fields. With the current increase in adopting the paradigm of predicting modeling using ML, it is more important than ever to embark onto reproducibility studies such as this one. We discuss the various challenges we faced during the reproduction process, and the steps we took to overcome them. 
+ML research is currently experiencing a reproducibility crisis, with many studies difficult or even impossible to reproduce \cite{kapoor2023leakage}. Often, this is the case due to unpublished data or source-code, or due to subtle sensitivities in the training process that are not documented. Additionally, ML code tends to be complex and as of yet lacks the standardisation of other scientific fields. With the current increase in adopting the paradigm of predicting modeling using ML, it is more important than ever to embark onto reproducibility studies such as this one. We discuss the various challenges we faced during the reproduction process, and the steps we took to overcome them. %This report is structured as follows: in 
 
 
 
 \section{Methodology}
+\label{sec:methodology}
 %\subsection{Foundational Models}
 \subsection{Transfer Learning \& Self-Supervised Learning}
+\label{sec:ssl}
 
 Traditional supervised learning frameworks rely heavily on the amount of annotated training data available. When labelled training data are scarce, other datasets can be exploited to improve performance. In \emph{transfer learning} a model is first pre-trained to perform a related secondary task for which we have more (potentially labelled) data \cite{udl}. The resulting model is then adapted to the primary task of interest. This is typically done by removing the final layer(s) of the network and adding new layers (heads) that produce the desired output. Further training is then performed on the primary task. The pre-trained part of the network can be frozen (i.e. its weights are not updated during training) or it can be fine-tuned. The key principle behind this approach is that the pre-trained model has built a good internal representation of the data from the secondary task, which can be useful for the primary task. It can also be seen as a form of sensible weight initialisation for most of the final network.
 
@@ -115,6 +117,7 @@ For transfer learning to be effective, the secondary task should contain a large
 
 
 \subsection{Contrastive Learning}
+\label{sec:contrastive}
 Contrastive learning is a SSL technique that produces meaningful representations (embeddings) from an unlabelled dataset. The key idea of contrastive learning is to constrast semantically similar (positive) and dissimilar (negative) pairs of data points, encouraging the representations of positive pairs to be close together in the embedding space, and those of negative pairs to be more orthogonal \cite{chuang2020debiased}. This can be done in a single-modal or multi-modal (cross-modal) setting, where by modality we refer to the type of data input such as images, text, etc. 
 In single-modal contrastive learning, a stochastic data augmentation is applied to a given data example to create two correlated views of the same example \cite{hintonsimpleframework}. This is then considered a positive pair, while all other examples are considered negative pairs. %A neural network encoder then extracts embedding vectors from these augmented data examples.
 
@@ -149,6 +152,7 @@ Training cross-modal models from scratch under CLIP loss has been shown to often
 
 
 \subsection{Embedding Space and Downstream Tasks}
+\label{sec:downstream}
  Since the aim of InfoNCE is to bring the vector representations of the same object close together, it has the result of creating a structured embedding space where semantically similar objects are close together, while semantically dissimilar objects are far apart. We can therefore view the embedding space as a multi-dimensional space of point-objects with distances between them having semantic meaning. Following this, the low-dimensional embeddings produced by the encoder networks and aligned under contrastive loss are semantically rich and can be useful for a variety of tasks. We refer to these tasks that come after the training process as \textbf{downstream tasks}. Downstream tasks on the embedding space can include similarity searches or even prediction of physical properties of the objects purely based on the space structure. We refer to the later as \textbf{zero-shot} predictions, as the model has not been trained on the specific task. 
  
  The embedding space can be multi-dimensional, but can be visualised by projecting the representations to a 2D space using dimensionality reduction techniques. One such technique is UMAP (Uniform Manifold Approximation and Projection) \cite{UMAP}, which aims to preserve the global structure and local relationships of data when mapping high-dimensional data to a lower-dimensional space. It does so by constructing a high-dimensional graph representation of the data, which it then optimises to create a low-dimensional projection that maintains as much of the original data's structure as possible.
@@ -166,6 +170,7 @@ Training cross-modal models from scratch under CLIP loss has been shown to often
 
 
 \section{Implementation}
+\label{sec:implementation}
 In AstroCLIP, we consider two modalities of galaxies: images and spectra. In essence, we approach the two modalities as filtered, noisy views of the same underlying galaxy. This implies that they should possess a shared latent space in which the embeddings of these cross-modal representations are aligned. To obtain these embeddings, we deploy a pair of models to encode the images and spectra. This process is carried out in two steps:
 \begin{enumerate}
     \item We utilise two pre-trained single-modal models, one for images and one for spectra, which were pre-trained using SSL, to enhance our model performance through transfer learning. For the pretrained image embedder, we use a galaxy image encoder from Stein et. al (see Ref.\cite{stein}), which is based on MoCo v2 \cite{mocov2}. For galaxy spectra, we employ the encoder part from the Spender model \cite{spender}.
@@ -190,19 +195,21 @@ To pair the images with spectra, we cross-match the galaxy spectra from the DESI
 
 
 \subsubsection{Data Catalogue for Downstream Tasks}
+
 %For experiments involving the prediction of physical properties from the embeddings, we further cross-match the image-spectrum pairs with the PRObabilistic Value-Added Bright Galaxy Survery (PROVABGS) catalogue \cite{PROVABGS}. We then specifically extract the estimates of the redshift $Z_{HP}$ and stellar mass ($M_{\star}$) for each galaxy ID that is present in the catalogue. We then perform the same filtering process as the original AstroCLIP paper: we only select enetries for which $M_{\star} > 0$ and mag$_g$,mag$_r$,mag$_z$ $> 0$, removing spurious entries. This yields a total of 105,159 entries, which we split into training and validation using a 90/10 ratio.
 For experiments involving the prediction of physical properties from the embeddings, we further cross-match the image-spectrum pairs with the PRObabilistic Value-Added Bright Galaxy Survey (PROVABGS) catalogue \cite{PROVABGS}. Specifically, we extract the estimates of the redshift $Z_{HP}$ and stellar mass ($M_{\star}$) for each galaxy ID present in the cross-matched catalogue. We then perform the same filtering process as outlined in the original AstroCLIP paper: selecting entries where $M_{\star} > 0$ and mag$_g$, mag$_r$, mag$_z$ $> 0$, thereby removing spurious entries. This process yields a total of 105,159 entries, which we split into training and validation sets using a 90/10 ratio.
 
 
 \subsection{Pre-trained Image Embedder} 
+\label{sec:resnet}
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\textwidth]{../figures/diagram_resnet.pdf}
     \caption{Overview of our image embedding procedure. Each raw galaxy image of size $256 \times 256$ undergoes an augmentation and is fed into the ResNet50 based pre-trained image embedder. During our contrastive training phase, we keep all the original weights frozen except the final layer of the MLP. After the training phase, we obtain the image embedding $\mathbf{z}^{\text{im}}$ of vector size $d=128$ that is now in the shared embedding space.}
     \label{fig:resnet}
 \end{figure}
-The pre-trained image embedder used in this reconstruction was developed by Stein et al. (2021a) \cite{stein}. It is based on the MoCo v2 framework \cite{mocov2}, utilising a ResNet50 backbone as the encoder network. The model was pre-trained on a curated subset of 3.5 million galaxies, sampled uniformly by $z$-band magnitude from the DESI Legacy Survey. The authors employed a single-modal contrastive learning SSL framework, where each image underwent multiple stochastic augmentations to create two views of the same image. These augmentations included galactic extinction, random cropping, random rotation, size scaling, point-spread function blur, jittering, and Gaussian noise addition. The model was then trained using a contrastive loss function to align the representations of the two views in the embedding space. An overview of our image embedding procedure is shown in Fig.\ref{fig
-}.
+The pre-trained image embedder used in this reconstruction was developed by Stein et al. (2021a) \cite{stein}. It is based on the MoCo v2 framework \cite{mocov2}, utilising a ResNet50 backbone as the encoder network. The model was pre-trained on a curated subset of 3.5 million galaxies, sampled uniformly by $z$-band magnitude from the DESI Legacy Survey. The authors employed a single-modal contrastive learning SSL framework, where each image underwent multiple stochastic augmentations to create two views of the same image. These augmentations included galactic extinction, random cropping, random rotation, size scaling, point-spread function blur, jittering, and Gaussian noise addition. The model was then trained using a contrastive loss function to align the representations of the two views in the embedding space. An overview of our image embedding procedure is shown in Fig.\ref{fig:resnet}.
 
 The encoder part of the network is a ResNet50 backbone adapted to extract embeddings from astronomical images. The encoding process begins by passing the images through a series of convolutional blocks, each containing a convolutional layer, followed by batch normalisation, ReLU activation, and max pooling. The core of the network consists of four sequential layers of residual blocks, each containing multiple convolutional layers with batch normalisation and ReLU activations. Some blocks include downsampling layers to adjust the dimensions of the feature maps. The resulting embeddings are then passed through a fully connected network (MLP) with 2048 input features and 2048 output features.
 
@@ -219,6 +226,7 @@ During our cross-modal contrastive training phase, we keep all encoder layers an
 
 
 \subsection{Pre-trained Spectrum Embedder}
+\label{sec:spender}
 
 
 \begin{figure}[H]
@@ -239,41 +247,64 @@ where the dot product and the softmax are applied on the last dimension, denotin
 
 For AstroCLIP, we discard the decoder part of the network and use the convolutional layers and attention mechanism of the encoder. We replace the MLP, which originally compressed the representation into a 6-dimensional latent space, with a new fully connected MLP comprising three hidden layers of sizes [256, 128, 128] and a final output layer of size $d=128$ with ReLU activation functions. This is then trained under the InfoNCE loss function, while the convolutional layers and attention mechanism are kept frozen. These frozen layers retain semantic information about the spectra, which is beneficial through transfer learning. Overall, this results to 230,272 trainable parameters, two orders of magnitude fewer than the original work's spectrum encoder, which totalled 43.2 million parameters \cite{astroclip}.
 
-\subsection{Constrastive Training}
-The pre-trained models form parts of our unified AstroCLIP model. We then train both models under InfoNCE loss defined in eq.(\ref{eq:infonce}). The embedded representations that originate from the same galaxy are considered positive pairs, with all other considered negative pairs. Before an image is passed through the image embedder, we apply basic augementations in the following manner: a fixed crop to the central $96 \times 96$ pixels, random roation, random horizontal flip and gaussian blur. We set the batch size to $K=512$ image-spectrum pairs, as it was shown in Ref.\cite{radford2021learning} that larger batch sizes often correlate with better performance. We train the models using the Adam optimiser \cite{adam} for 80 epochs on a single NVIDIA A100-SXM-80GB GPU on the Camridge Wilkes3 cluster. We use an adaptable learning rate scheduler that reduces the learning rate by a factor of 2 (chosen by trial and error) if the validation loss does not improve for 5 epochs, using \verb|PyTorch|'s \verb|ReduceLROnPlateau| \cite{LRon}. Similar to the results observed in other studies such as Ref.\cite{gir},  our performance improves when we keep the temperature parameter $\tau$ constant rather than allowing it to vary. The training process takes roughly 2 hours to complete.
+\subsection{Contrastive Training}
+\label{sec:training}
+The pre-trained models are used as components of our unified AstroCLIP model. We further train both models jointly under the InfoNCE loss defined in Eq. (\ref{eq:infonce}) using the training set of image-spectrum pairs as obtained in section \ref{sec:data}. Embeddings originating from the same galaxy are considered positive pairs, while all others are considered negative pairs. Before an image is passed through the image embedder, we apply basic augmentations as follows: a fixed crop to the central $96 \times 96$ pixels, random rotation, random horizontal flip, and Gaussian blur. We normalise the embeddings for the similarity metric of Eq. (\ref{eq:cosine}) using the L2 norm.We set the batch size to $K=512$ image-spectrum pairs, as larger batch sizes often correlate with better performance, consistent with the findings of Ref. \cite{radford2021learning}. We train the models using the Adam optimiser \cite{adam} for 80 epochs on a single NVIDIA A100-SXM-80GB GPU on the Cambridge Wilkes3 cluster. We use an adaptable learning rate scheduler that reduces the learning rate by a factor of 2 (chosen by trial and error) if the validation loss does not improve for 5 epochs, using \verb|PyTorch|'s \verb|ReduceLROnPlateau| \cite{LRon}. Similar to results observed in other studies, such as Ref.\cite{gir}, our performance improves when we keep the temperature parameter $\tau = 15.5$ constant rather than allowing it to vary. The cross-modal contrastive training process takes roughly 2 hours to complete.
 
 \subsection{Downstream Tasks}
-To demonstrate the capabilities of AstroCLIP's embedding space, we demonstrate its performance across a range of tasks for which it was not explicitly trained for, nor fine-tuned. We firstly embed all galaxy image and spectra in the validation set (obtained as outlined in section \ref{sec:data}) using the trained AstroCLIP model as follows:
+\label{sec:downstream_tasks}
+To demonstrate the capabilities of AstroCLIP's embedding space, we evaluate its performance across a range of tasks for which it was neither explicitly trained nor fine-tuned. Firstly, we embed all galaxy images and spectra in the validation set (obtained as outlined in Section \ref{sec}) using our trained AstroCLIP model as follows:
 
 \begin{equation}
-    \text{Initial Modality representation} : \left( \mathbf{x}^{\text{im}}, \mathbf{x}^{\text{sp}} \right) \xmapsto{\text{AstroCLIP}} \text{Embeddings} : \left( \mathbf{z}^{\text{im}}, \mathbf{z}^{\text{sp}} \right) \in \mathbb{R}^{128}.
+    \text{Initial Modality Representation} : \left( \mathbf{x}, \mathbf{y} \right) \xmapsto{\text{AstroCLIP}} \text{Embeddings} : \left( \mathbf{z}^{\text{im}}, \mathbf{z}^{\text{sp}} \right) \in \mathbb{R}^{128}.
 \end{equation}
-We then normalise both image and spectrum embeddings as:
+where $\mathbf{x}, \mathbf{y}$ are the raw galaxy images and spectra, and $\mathbf{z}^{\text{im}}, \mathbf{z}^{\text{sp}}$ are the corresponding image and spectrum embeddings. We then normalise both image and spectrum embeddings as:
 \begin{equation}
-    \mathbf{\bar{z}}^{im} =  \frac{\mathbf{z}^{im} }{|| \mathbf{z}^{im} ||_2}, \quad \mathbf{\bar{z}}^{sp} =  \frac{\mathbf{z}^{sp} }{|| \mathbf{z}^{sp} ||_2}.
+    \mathbf{\bar{z}}^{\text{im}} =  \frac{\mathbf{z}^{\text{im}} }{|| \mathbf{z}^{\text{im}} ||_2}, \quad \mathbf{\bar{z}}^{\text{sp}} =  \frac{\mathbf{z}^{\text{sp}} }{|| \mathbf{z}^{\text{sp}} ||_2}
 \end{equation}
 and use the normalised galaxy embeddings in a shared, cross-modal latent space to perform the tasks outlined below.
 
-\subsubsection*{Query Retrieval}
-We showcase the architecture's ability to align embeddings of galaxies, we choose a random galaxy from the validation set and retrieve similar galaxies purely based on the embedding space structure. Specifically, we perform the galaxy search using the cosine-similarity (eq.(\ref{eq:cosine})) between the query galaxy $\bar{\mathbf{z}}_q$ and all other galaxies in the validation set. We then rank the galaxies based on the similarity score and display the top 5 most similar galaxies. For instance, to search for galaxy images that correspond to a specific query spectrum $\mathbf{y}_i$, we calculate the cosine similarity between the query spectrum embedding $\{\mathbf{x}^{sp}_i\}_{val}$ and the image embeddings $\{\mathbf{x}^{im}_i\}_{val}$ in the validation set. The target images with the highest similarity values are then returned. This process requires no additional transformations or alterations.
 
-This allows us to search the embedding space for both the image and spectrum embeddings, which is unique to this cross-modal framework. We present examples for both \emph{in-modality} $S_{C}(\mathbf{z}^{im}_q, \mathbf{z}^{im}_j)$ or $S_{C}(\mathbf{z}^{sp}_q, \mathbf{z}^{sp}_j)$, where the query and target embeddings are of the same modality, and \emph{cross-modality} $S_{C}(\mathbf{z}^{im}_q, \mathbf{z}^{sp}_j)$ or $S_{C}(\mathbf{z}^{sp}_q, \mathbf{z}^{im}_j)$, where the query and target embeddings are of different modalities.
+\subsubsection{Query Retrieval}
+% We showcase the AstroCLIP's ability to align embeddings of galaxies, we choose a random galaxy from the validation set and retrieve similar galaxies purely based on the embedding space structure. Specifically, we perform the galaxy search using the cosine-similarity (eq.(\ref{eq:cosine})) between the query galaxy $\bar{\mathbf{z}}_q$ and all other galaxies in the validation set. We then rank the galaxies based on the similarity score and display the top 5 most similar galaxies. For instance, to search for galaxy images that are similar to a specific query spectrum $\mathbf{y}_i$, we calculate the cosine similarity between the query spectrum embedding $\mathbf{z}^{\text{sp}}_i$ and the all image embeddings $\{\mathbf{z}^{\text{im}}_{j}\}_{val}$ in the validation set. We denote this similarity score as $S_C(\mathbf{z}^{\text{sp}}_i, \mathbf{z}^{\text{im}}_j)$. The target images with the highest similarity values are then returned. This process requires no additional transformations or alterations.
+
+% This allows us to search the embedding space for both the image and spectrum embeddings, which is unique to this cross-modal framework. We present examples for both \emph{in-modality} $S_{C}(\mathbf{z}^{\text{im}}_q, \mathbf{z}^{\text{im}}_j)$ or $S_{C}(\mathbf{z}^{\text{sp}}_q, \mathbf{z}^{\text{sp}}_j)$, where the query and target embeddings are of the same modality, and \emph{cross-modality} $S_{C}(\mathbf{z}^{\text{im}}_q, \mathbf{z}^{\text{sp}}_j)$ or $S_{C}(\mathbf{z}^{\text{sp}}_q, \mathbf{z}^{\text{im}}_j)$, where the query and target embeddings are of different modalities.
+
+To showcase AstroCLIP's ability to the galaxy embeddings, we randomly select a galaxy from the validation set and retrieve similar galaxies purely based on the embedding space structure. Specifically, we perform the galaxy search using the cosine similarity (Eq. (\ref{eq:cosine})) between the query galaxy $\bar{\mathbf{z}}_q$ and all other galaxies in the validation set. We then rank the galaxies based on the similarity score and display the top 5 most similar galaxies.
+
+For instance, to search for galaxy images similar to a specific query spectrum $\mathbf{y}_q$, we calculate the cosine similarity between the query spectrum embedding $\mathbf{z}^{\text{sp}}_q$ and all image embeddings $\{ \mathbf{z}^{\text{im}}_j \}$ in the validation set. We denote this similarity score as $S_C(\mathbf{z}^{\text{sp}}_q, \mathbf{z}^{\text{im}}_j)$. The target images with the highest similarity values are then returned. This process requires no additional transformations or alterations.
+
+This allows us to search the embedding space for both image and spectrum embeddings, which is unique to this cross-modal framework. We present examples for both \emph{in-modality} $S_{C}(\mathbf{z}^{\text{im}}_q, \mathbf{z}^{\text{im}}j)$ or $S_{C}(\mathbf{z}^{\text{sp}}_q, \mathbf{z}^{\text{sp}}j)$, where the query and target embeddings are of the same modality, and \emph{cross-modality} $S_{C}(\mathbf{z}^{\text{im}}_q, \mathbf{z}^{\text{sp}}j)$ or $S_{C}(\mathbf{z}^{\text{sp}}_q, \mathbf{z}^{\text{im}}_j)$, where the query and target embeddings are of different modalities.
 
 
 
 
 
+\subsubsection{Zero Shot Prediction of Physical Properties}
+To quantify AstroCLIP's inference abilities, we consider the task of predicting the redshift $Z_{HP}$ and stellar mass $M_{\star}$ of galaxies purely from their extracted embeddings. Each embedding has a corresponding redshift and stellar mass value provided by the PROVABGS catalogue. These values are used as the ground truth for the prediction task but were not used in the training process.
+
+We perform a simple $k$-Nearest Neighbour ($k$-NN) regression on the embedded representations to predict the redshift and stellar mass values. $k$-NN regression works by averaging the output values of the $k$-nearest data points to predict the value for a new data point. To that end, we further split the 30,0000 pairs in the validation set into a training set and a held-out set. In $k$-NN regression, `training' means simply storing the image embeddings and their corresponding redshift values. We then use the train set to predict a redshift value for each data point in the held-out set, and evaluate the performance of the model by comparing the predicted redshift values to the true redshift values. The \verb|KNeighborsRegressor| is instantiated with parameters set to \verb|weights="distance"| and the number of neighbours is set to 16. By setting \verb|weights| to \verb|distance|, the algorithm ensures that closer neighbours have a greater influence on the prediction, as their contributions are inversely proportional to their distances from the query point.
 
 
-\subsubsection*{Zero Shot Prediction of Physical Properties}
-To evaluate AstroCLIP's ability to predict physical properties of galaxies, we consider the task of predicting the catalogue-based redshift $\mathcal{Z}$ and stellar mass $M_{\star}$ of galaxies from the embedded galaxy representations. Each of the embeddings has a corresponding redshift and stellar mass value provided by the PROVABGS catalogue. These values are used as the ground truth for the prediction task, but note that they were not used in the training process. We then proceed by performing a simple $k$-Nearest Neighbour ($k$-NN) regression on the embedded representations to predict the redshift and stellar mass values. 
-%We use simple $k$-Nearest Neighbour ($k$-NN) our embedded images and spectra to predict the physical properties without any additional training or finetuning.  
-We do this by further splitting the 30K pairs in the validation set into a training and held-out test set. We then train a $k$-NN regressor on the new training set and evaluate its performance on the test set. We then instantiate the $KNeighborsRegressor$ with parameters set to \texttt{weights="distance"} and \texttt{n\_neighbors=16}. By setting \texttt{weights} to \texttt{"distance"}, the algorithm ensures that closer neighbors have a greater influence on the prediction, as their contributions are inversely proportional to their distances from the query point. This method allows us to calculate the predicted values for redshift and stellar mass as weighted averages of the target values of these nearest neighbors. 
+%We then train a $k$-NN regressor on the new training set and evaluate its performance on the test set. The \verb|KNeighborsRegressor| is instantiated with parameters set to \texttt{weights="distance"} and \texttt{n_neighbors=16}. By setting \texttt{weights} to \texttt{"distance"}, the algorithm ensures that closer neighbours have a greater influence on the prediction, as their contributions are inversely proportional to their distances from the query point. This method allows us to calculate the predicted values for redshift and stellar mass as weighted averages of the target values of these nearest neighbours. k-NN regression works by averaging the output values of the k-nearest data points to predict the value for a new data point.
 
-\subsubsection*{Embedding Space Analysis}
-We analyse the embedding space structure by projecting the embeddings to a 2D space using UMAP \cite{UMAP}. By doing this for image embeddings in isolation, spectra embeddings in isolation and the combined image-spectrum embeddings, we showcase the ability of constrastive training to align the embeddings based on shared semantics. First, we want to examine whether the model is able to separate the galaxy embeddings based on particular characteristics. To that end, we look for look for isolated collections of galaxies in the embedding space, which we refer to as `islands'. We then examine the galaxies in these islands to see if they share any common characteristics. Secondly, we examine whether the model is able to create meaningful clusters in the high-dimensional embedding space, which may share common characteristics. As the embedding space structure is informed by both the image representations and the spectrum representations, we expect to see clusters which contain galaxies that are similar in both modalities.
-To detect these islands on the 2D UMAP projection, we use the DBScan clustering algorithm \cite{dbscan} from \verb|scikit-learn|.DBSCAN (Density-Based Spatial Clustering of Applications with Noise) is an unsupervised machine learning algorithm designed to identify clusters in large spatial datasets by examining the local density of data points. The algorithm categorises points into core points, border points, and noise points, governed by two parameters: $\epsilon$ (epsilon) and $\text{minPts}$ (minimum points).
+% To evaluate AstroCLIP's ability to predict physical properties of galaxies, we consider the task of predicting the redshift $Z_{HP}$ and stellar mass $M_{\star}$ of galaxies purely from their embeddings. Each embedding has a corresponding redshift and stellar mass value provided by the PROVABGS catalogue. These values are used as the ground truth for the prediction task, but they were not used in the training process. We then perform a simple $k$-Nearest Neighbour ($k$-NN) regression on the embedded representations to predict the redshift and stellar mass values. We do this by further splitting the 30K pairs in the validation set into a training and held-out test set. We then train a $k$-NN regressor on the new training set and evaluate its performance on the test set. We then instantiate the $KNeighborsRegressor$ with parameters set to \texttt{weights="distance"} and \texttt{n\_neighbors=16}. By setting \texttt{weights} to \texttt{"distance"}, the algorithm ensures that closer neighbors have a greater influence on the prediction, as their contributions are inversely proportional to their distances from the query point. This method allows us to calculate the predicted values for redshift and stellar mass as weighted averages of the target values of these nearest neighbors. 
 
+
+% Each of the embeddings has a corresponding redshift and stellar mass value provided by the PROVABGS catalogue. These values are used as the ground truth for the prediction task, but note that they were not used in the training process. We then proceed by performing a simple $k$-Nearest Neighbour ($k$-NN) regression on the embedded representations to predict the redshift and stellar mass values. 
+% %We use simple $k$-Nearest Neighbour ($k$-NN) our embedded images and spectra to predict the physical properties without any additional training or finetuning.  
+% We do this by further splitting the 30K pairs in the validation set into a training and held-out test set. We then train a $k$-NN regressor on the new training set and evaluate its performance on the test set. We then instantiate the $KNeighborsRegressor$ with parameters set to \texttt{weights="distance"} and \texttt{n\_neighbors=16}. By setting \texttt{weights} to \texttt{"distance"}, the algorithm ensures that closer neighbors have a greater influence on the prediction, as their contributions are inversely proportional to their distances from the query point. This method allows us to calculate the predicted values for redshift and stellar mass as weighted averages of the target values of these nearest neighbors. 
+
+\subsection{Embedding Space Analysis}
+We extend the original work by providing an analysis of the embedding space structure. Specifically, we begin by projecting the embeddings to a 2D space using UMAP \cite{UMAP} 
+%We analyse the embedding space structure by projecting the embeddings to a 2D space using UMAP \cite{UMAP}. 
+By doing this for image embeddings in isolation, spectra embeddings in isolation and the combined image-spectrum embeddings, we showcase the ability of constrastive training to align the embeddings based on shared semantics. 
+
+First, we examine whether the model can separate the galaxy embeddings based on specific characteristics. To that end, we search for isolated collections of galaxies in the embedding space, referred to as `islands', and investigate if these galaxies share common traits. Secondly, we examine whether the model forms meaningful clusters in the original, high-dimensional embedding space before we map them to 2-dimensions. As this structure is informed by both image and spectrum representations, we expect to find clusters of galaxies that are separable in both modalities.
+
+
+
+To detect these islands on the 2D UMAP projection, we use the DBSCAN clustering algorithm \cite{dbscan} from \verb|scikit-learn|. DBSCAN (Density-Based Spatial Clustering of Applications with Noise) is an unsupervised machine learning algorithm designed to identify clusters in large spatial datasets by examining the local density of data points. The algorithm categorises points into core points, border points, and noise points, governed by two parameters: $\epsilon$ (epsilon) and $\text{minPts}$ (minimum points). These are defined as follows:
 \begin{itemize}
     \item \textbf{Core Points:} A point is considered a core point if it has at least $\text{minPts}$ points within $\epsilon$ radius, including the point itself. This criterion ensures that core points are those with a high density of neighbouring points.
 
@@ -282,9 +313,6 @@ To detect these islands on the 2D UMAP projection, we use the DBScan clustering 
     \item \textbf{Noise Points:} Noise points are data points that are neither core points nor border points. These points do not belong to any cluster.
 \end{itemize}
 DBSCAN starts by arbitrarily selecting a point and assessing whether it is a core point. If it is, the algorithm then iteratively explores and includes all directly reachable points, thereby expanding the cluster. This process continues until no new points can be added to the cluster. Points that are reachable from a core point via other core points are also included in the same cluster.
-
-An illustration of the DBSCAN algorithm is shown in Fig.\ref{fig:dbscan}. DBSCAN is particularly effective in identifying islands in 2D projections like UMAP because it clusters based on local density, allowing for the detection of irregularly shaped clusters without requiring predefined cluster numbers. 
-
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.5\textwidth]{../figures/dbscan_diagram.png}
@@ -293,19 +321,29 @@ An illustration of the DBSCAN algorithm is shown in Fig.\ref{fig:dbscan}. DBSCAN
     \label{fig:dbscan}
 \end{figure}
 
-To cluster the high-dimensional embeddings ($d = 128$), we use k-Means \cite{udl} clustering from \verb|scikit-learn|. K-means is a centroid-based clustering algorithm that partitions a dataset into \( k \) clusters, where \( k \) is a user-specified parameter. The algorithm works by initialising \( k \) centroids, assigning each data point to the nearest centroid, and iteratively updating the centroids to minimise the variance within each cluster until convergence. We use the silhouette score \cite{silhouette} to evaluate the quality of the clustering, and we choose a reasonable value that balances the number of clusters and the quality of the clustering. We then project the embeddings to a 2D space using UMAP, and examine the spectra and images of the clusters formed.
+% An illustration of the DBSCAN algorithm is shown in Fig.\ref{fig:dbscan}. DBSCAN is particularly effective in identifying islands in 2D projections like UMAP because it clusters based on local density, allowing for the detection of irregularly shaped clusters without requiring predefined cluster numbers. 
 
+% We also directly cluster the untouched embeddings that are of dimension $d = 128$, before we use dimensionality reduction techniques. To do so, we use k-Means \cite{udl} clustering from \verb|scikit-learn|. K-means is a centroid-based clustering algorithm that partitions a dataset into \( k \) clusters, where \( k \) is a user-specified parameter. The algorithm works by initialising \( k \) centroids, assigning each data point to the nearest centroid, and iteratively updating the centroids to minimise the variance within each cluster until convergence. We use the silhouette score \cite{silhouette} to evaluate the quality of the clustering, and we choose a reasonable value that balances the number of clusters and the quality of the clustering. We then project the embeddings to a 2D space using UMAP, and examine the spectra and images of the clusters formed.
+
+An illustration of the DBSCAN algorithm is shown in Fig.\ref{fig:dbscan}. DBSCAN is particularly effective in identifying islands in 2D projections, such as those produced by UMAP, due to its density-based clustering approach. This method allows for the detection of irregularly shaped clusters without the need for predefined cluster numbers.
+
+We also perform clustering on the original 128-dimensional embeddings before applying any dimensionality reduction techniques. For this purpose, we utilise the k-Means clustering  algorithm \cite{udl} from \verb|scikit-learn| . K-Means is a centroid-based clustering algorithm that partitions a dataset into \( k \) clusters, where \( k \) is a user-specified parameter. The algorithm operates by initialising \( k \) centroids, assigning each data point to the nearest centroid, and iteratively updating the centroids to minimise within-cluster variance until convergence. We evaluate the clustering quality using the silhouette score \cite{silhouette} to choose an appropriate \( k \) that balances the number of clusters and clustering quality. Subsequently, we project the embeddings to a 2D space using UMAP and examine the spectra and images of the clusters formed.
 
 
 
 
 
 %---------------------------------------
+\newpage
+
 \section{Results}
-In this section, we present our results from the AstroCLIP reproduction. Where appropriate, we compare our results to the original AstroCLIP paper (v1) \cite{astroclip} and discuss possible reasons for any discrepancies. A discussion on the implications of our results and potential future work is also provided.
+\label{sec:results}
+In this section, we present the results of our AstroCLIP reproduction and extension. Where appropriate, we compare our results to the original work (v1) \cite{astroclip} and discuss possible reasons for any discrepancies. A discussion on the implications of our results and potential future work is also provided.
 
 \subsection{Loss Curves}
-Fig.\ref{fig:loss} shows the average InfoNCE loss per epoch for training and validation sets during the constrastive training. We note here that validation loss in constrative learning is not a direct measure of performance, but rather a proxy for the model's generalisation ability, as the training does not involve any labelled data.
+
+Fig.\ref{fig:loss} shows the average InfoNCE loss per epoch for the training and validation sets during the cross-modal contrastive training. It is important to note that validation loss in the context of the contrastive framework is not a direct measure of performance but rather a proxy for the model's generalisation ability, as the training does not involve any labelled data.
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{../figures/training_plot.png}
@@ -313,15 +351,18 @@ Fig.\ref{fig:loss} shows the average InfoNCE loss per epoch for training and val
     \label{fig:loss}
 \end{figure}
 
-Both the training and validation loss decrease steadily over the 80 epochs, indicating that the model is learning to align the image and spectrum embeddings in the shared latent space. The validation loss is consistently higher than the training loss as expected, but does not diverge significantly nor is starting to increase, indicating that the model is not overfitting. Whenever the training loss plateaus for 5 epochs, the learning rate is reduced by a factor of 2, which results in further decrease in the loss. The loss continues to decrease, albeit at a slower rate, until the end of the training. This could indicate that the model has not fully converged and could benefit from further training. 
+Both the training and validation losses decrease steadily over the 80 epochs, indicating that the model is effectively learning to align the image and spectrum embeddings in the shared latent space. The validation loss is consistently higher than the training loss, as expected, but it does not diverge significantly nor begin to increase, suggesting that the model is not overfitting. Whenever the training loss plateaus for five epochs, the learning rate is reduced by a factor of two, resulting in a further decrease in the loss. This suggests that the model is prone to overshooting the optimal parameters and that the learning rate schedule is effective in mitigating this. The loss continues to decrease, albeit at a slower rate, until the end of the training. This could imply that the model has not fully converged and might benefit from additional training. The original work does not provide loss curves, learning rates, or the number of epochs, and thus a direct comparison is not possible.
 
-The original work did not provide loss curves, learning rate nor the numbers of epochs, and so a direct comparison is not possible. 
+
+
+
+
 
 
 
 
 \subsection{Query Retrieval}
-We present the images of the four most similar galaxies (based on the cosine similarity of their embeddings) to four random query galaxy for all four possible combinations of modalities in Fig.\ref{fig:retrieval}. By construction, for in-modal searches the best match for the query galaxy is the galaxy itself, as the similarity score is 1.0. The model is able to retrieve galaxies that are visually similar to the query galaxy. The colour is well preserved in both in-modal and cross-modal searches, indicating that the model has learned to align the image and spectrum embeddings in the shared latent space. If the model was trained as a single-modal model, we would expect in-modal image searches to perform better than cross-modal searches. However, the model is able to retrieve visually similar galaxies in both cases, indicating that the both modality embeddings are informed by each other.  This is the reason why spectrum query - spectrum retrievals $S_C(\mathbf{z}^{sp}_q, \mathbf{z}^{sp}_j)$ are have similar images as well. 
+Fig.\ref{fig:retrieval} showcases the three most similar galaxies (based on the cosine similarity of their embeddings) to four random query galaxy for all possible combinations of modalities. By construction, for in-modal searches the best match for the query galaxy is the galaxy itself, as the similarity score is 1.0. The model is able to retrieve galaxies that are visually similar to the query galaxy. The colour is well preserved in both in-modal and cross-modal searches, indicating that the model has learned to align the image and spectrum embeddings in the shared latent space. If the model was trained as a single-modal model, we would expect in-modal image searches to perform better than cross-modal searches. However, the model is able to retrieve visually similar galaxies in both cases, indicating that the structuring is informed by both modalities.  This is the reason why spectrum query - spectrum retrievals $S_C(\mathbf{z}^{\text{sp}}_q, \mathbf{z}^{\text{sp}}_j)$ are have similar images as well. 
 
 \begin{figure}[H]
     \centering
@@ -335,51 +376,53 @@ We present the images of the four most similar galaxies (based on the cosine sim
     \begin{subfigure}{0.22\textwidth}
         \centering
         \includegraphics[height=0.21\textheight]{../figures/images_im_im.png}
-        \caption{$S_C(\mathbf{z}_q^{im}, \mathbf{z}_j^{im})$}
+        \caption{$S_C(\mathbf{z}_q^{\text{im}}, \mathbf{z}_j^{\text{im}})$}
         \label{fig:retrieval_2}
     \end{subfigure}%
     \hfill
     \begin{subfigure}{0.22\textwidth}
         \centering
         \includegraphics[height=0.21\textheight]{../figures/images_sp_sp.png}
-        \caption{$S_C(\mathbf{z}_q^{sp}, \mathbf{z}_j^{sp})$}
+        \caption{$S_C(\mathbf{z}_q^{\text{sp}}, \mathbf{z}_j^{\text{sp}})$}
         \label{fig:retrieval_3}
     \end{subfigure}%
     \hfill
     \begin{subfigure}{0.22\textwidth}
         \centering
         \includegraphics[height=0.21\textheight]{../figures/images_im_sp.png}
-        \caption{$S_C(\mathbf{z}_q^{sp}, \mathbf{z}_j^{im})$}
+        \caption{$S_C(\mathbf{z}_q^{\text{sp}}, \mathbf{z}_j^{\text{im}})$}
         \label{fig:retrieval_4}
     \end{subfigure}%
     \hfill
     \begin{subfigure}{0.22\textwidth}
         \centering
         \includegraphics[height=0.21\textheight]{../figures/images_sp_im.png}
-        \caption{$S_C(\mathbf{z}_q^{im}, \mathbf{z}_j^{sp})$}
+        \caption{$S_C(\mathbf{z}_q^{\text{im}}, \mathbf{z}_j^{\text{sp}})$}
         \label{fig:retrieval_5}
     \end{subfigure}
-    \caption{Your overall figure caption here.}
+    \caption{Query retrieval for four galaxies in the validation set. The images in block (a) are the query galaxies. Block (b) shows the top 3 most similar galaxies to the query galaxy based on image-image embedding similarity. Block (c) shows the top 3 most similar galaxies to the query galaxy based on spectrum-spectrum embedding similarity. Blocks (d) and (e) show the top 3 most similar galaxies to the query galaxy based on spectrum-image and image-spectrum embedding similarity, respectively.}
     \label{fig:retrieval}
 \end{figure}
-We further illustrate the search capabilities of this model by presenting the retrieved spectra for some of the randmly chosen query galaxies for all four possible combinations of modalities in Fig.\ref{fig:spectral_retrieval}. The 5 most similar spectra are shown for each query galaxy. The model is largely able to retrieve spectra similar to the query galaxy, in all modality pair combinations. This is both in terms of the overall shape of the spectrum and the presence of specific spectral features, such as particular spikes. This further demonstrates the model's ability to align the image and spectrum embeddings in the shared latent space.
+We further illustrate the search capabilities of this model by presenting the retrieved spectra for some of query galaxies for all combinations of modalities in Fig.\ref{fig:spectral_retrieval}. The 5 most similar spectra are shown for each query galaxy. The model is largely able to retrieve spectra similar to the query galaxy, in all modality pair combinations. This is both in terms of the overall shape of the spectrum and the presence of specific spectral features, such as particular spikes. This further demonstrates the model's ability to align the image and spectrum embeddings in the shared latent space.
 
-This search abilit can be useful in a variety of applications, such as seach for rare or unusual objects (see some examples of this in Ref.\cite{stein}). The results are largely consistent with the original work, although a direct comparison is difficult as the images and spectra chosen for queries are random. It is worth noting that our results are achieved using a much smaller model the original work, but yields (visually) similar results.
-
+This search retrieval ability can be useful in a variety of applications, such as seach for rare or unusual objects (see some examples of this in Ref.\cite{stein}). The results are largely consistent with the original work, although a direct comparison is difficult as the images and spectra chosen for queries are random. It is worth noting that our results are achieved using a much smaller model the original work, yet still yields (visually) similar results.
 \begin{figure}[H]
     \centering
+    % Add vertical space to extend into the top margin
+    \vspace*{-1.3cm}
+
     % First row
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{../figures/spectral_retrieval_im_im_1}
-        \caption{$S_C(\mathbf{z}_q^{im}, \mathbf{z}_j^{im})$}
+        \caption{$S_C(\mathbf{z}_q^{\text{im}}, \mathbf{z}_j^{\text{im}})$}
         \label{fig:im_im_1}
     \end{subfigure}%
     \hfill
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{../figures/spectral_retrieval_im_im_2}
-        \caption{$S_C(\mathbf{z}_q^{im}, \mathbf{z}_j^{im})$}
+        \caption{$S_C(\mathbf{z}_q^{\text{im}}, \mathbf{z}_j^{\text{im}})$}
         \label{fig:im_im_2}
     \end{subfigure}
 
@@ -387,14 +430,14 @@ This search abilit can be useful in a variety of applications, such as seach for
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{../figures/spectral_retrieval_im_sp_1}
-        \caption{$S_C(\mathbf{z}_q^{sp}, \mathbf{z}_j^{im})$}
+        \caption{$S_C(\mathbf{z}_q^{\text{sp}}, \mathbf{z}_j^{\text{im}})$}
         \label{fig:im_sp_1}
     \end{subfigure}%
     \hfill
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{../figures/spectral_retrieval_im_sp_2}
-        \caption{$S_C(\mathbf{z}_q^{sp}, \mathbf{z}_j^{im})$}
+        \caption{$S_C(\mathbf{z}_q^{\text{sp}}, \mathbf{z}_j^{\text{im}})$}
         \label{fig:im_sp_2}
     \end{subfigure}
 
@@ -402,14 +445,14 @@ This search abilit can be useful in a variety of applications, such as seach for
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{../figures/spectral_retrieval_sp_im_1}
-        \caption{$S_C(\mathbf{z}_q^{im}, \mathbf{z}_j^{sp})$}
+        \caption{$S_C(\mathbf{z}_q^{\text{im}}, \mathbf{z}_j^{\text{sp}})$}
         \label{fig:sp_im_1}
     \end{subfigure}%
     \hfill
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{../figures/spectral_retrieval_sp_im_2}
-        \caption{$S_C(\mathbf{z}_q^{im}, \mathbf{z}_j^{sp})$}
+        \caption{$S_C(\mathbf{z}_q^{\text{im}}, \mathbf{z}_j^{\text{sp}})$}
         \label{fig:sp_im_2}
     \end{subfigure}
 
@@ -417,30 +460,100 @@ This search abilit can be useful in a variety of applications, such as seach for
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{../figures/spectral_retrieval_sp_sp_1}
-        \caption{$S_C(\mathbf{z}_q^{sp}, \mathbf{z}_j^{sp})$}
+        \caption{$S_C(\mathbf{z}_q^{\text{sp}}, \mathbf{z}_j^{\text{sp}})$}
         \label{fig:sp_sp_1}
     \end{subfigure}%
     \hfill
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{../figures/spectral_retrieval_sp_sp_2}
-        \caption{$S_C(\mathbf{z}_q^{sp}, \mathbf{z}_j^{sp})$}
+        \caption{$S_C(\mathbf{z}_q^{\text{sp}}, \mathbf{z}_j^{\text{sp}})$}
         \label{fig:sp_sp_2}
     \end{subfigure}
 
-    \caption{Spectral retrieval for random query galaxies in the validation set. The top 5 most similar spectra are shown for each query galaxy, pictured in each graph. This was done using image-image search for (\ref{fig:im_im_1}) (\ref{fig:im_im_2}), image-spectrum search for (\ref{fig:im_sp_1}) (\ref{fig:im_sp_2}), spectrum-image search for (\ref{fig:sp_im_1}) (\ref{fig:sp_im_2}) and spectrum-spectrum search for (\ref{fig:sp_sp_1}) (\ref{fig:sp_sp_2}).}
+    % Add vertical space to extend into the bottom margin
+    % \vspace*{-2cm}
+
+    \caption{Spectral retrieval for query galaxies in the validation set. The top 5 most similar spectra are shown for each query galaxy in gray, while the query spectrum in shown in blue. The image of the query galaxy is shown in the corner of each plot.
+    % . This was done using image-image search for (\ref{fig:im_im_1}) (\ref{fig:im_im_2}), image-spectrum search for (\ref{fig:im_sp_1}) (\ref{fig:im_sp_2}), spectrum-image search for (\ref{fig:sp_im_1}) (\ref{fig:sp_im_2}) and spectrum-spectrum search for (\ref{fig:sp_sp_1}) (\ref{fig:sp_sp_2}).
+    }
     \label{fig:spectral_retrieval}
 \end{figure}
 
 
+% \begin{figure}[H]
+%     \centering
+%     % First row
+%     \begin{subfigure}[b]{0.45\textwidth}
+%         \centering
+%         \includegraphics[width=\textwidth]{../figures/spectral_retrieval_im_im_1}
+%         \caption{$S_C(\mathbf{z}_q^{\text{im}}, \mathbf{z}_j^{\text{im}})$}
+%         \label{fig:im_im_1}
+%     \end{subfigure}%
+%     \hfill
+%     \begin{subfigure}[b]{0.45\textwidth}
+%         \centering
+%         \includegraphics[width=\textwidth]{../figures/spectral_retrieval_im_im_2}
+%         \caption{$S_C(\mathbf{z}_q^{\text{im}}, \mathbf{z}_j^{\text{im}})$}
+%         \label{fig:im_im_2}
+%     \end{subfigure}
+
+%     % Second row
+%     \begin{subfigure}[b]{0.45\textwidth}
+%         \centering
+%         \includegraphics[width=\textwidth]{../figures/spectral_retrieval_im_sp_1}
+%         \caption{$S_C(\mathbf{z}_q^{\text{sp}}, \mathbf{z}_j^{\text{im}})$}
+%         \label{fig:im_sp_1}
+%     \end{subfigure}%
+%     \hfill
+%     \begin{subfigure}[b]{0.45\textwidth}
+%         \centering
+%         \includegraphics[width=\textwidth]{../figures/spectral_retrieval_im_sp_2}
+%         \caption{$S_C(\mathbf{z}_q^{\text{sp}}, \mathbf{z}_j^{\text{im}})$}
+%         \label{fig:im_sp_2}
+%     \end{subfigure}
+
+%     % Third row
+%     \begin{subfigure}[b]{0.45\textwidth}
+%         \centering
+%         \includegraphics[width=\textwidth]{../figures/spectral_retrieval_sp_im_1}
+%         \caption{$S_C(\mathbf{z}_q^{\text{im}}, \mathbf{z}_j^{\text{sp}})$}
+%         \label{fig:sp_im_1}
+%     \end{subfigure}%
+%     \hfill
+%     \begin{subfigure}[b]{0.45\textwidth}
+%         \centering
+%         \includegraphics[width=\textwidth]{../figures/spectral_retrieval_sp_im_2}
+%         \caption{$S_C(\mathbf{z}_q^{\text{im}}, \mathbf{z}_j^{\text{sp}})$}
+%         \label{fig:sp_im_2}
+%     \end{subfigure}
+
+%     % Fourth row
+%     \begin{subfigure}[b]{0.45\textwidth}
+%         \centering
+%         \includegraphics[width=\textwidth]{../figures/spectral_retrieval_sp_sp_1}
+%         \caption{$S_C(\mathbf{z}_q^{\text{sp}}, \mathbf{z}_j^{\text{sp}})$}
+%         \label{fig:sp_sp_1}
+%     \end{subfigure}%
+%     \hfill
+%     \begin{subfigure}[b]{0.45\textwidth}
+%         \centering
+%         \includegraphics[width=\textwidth]{../figures/spectral_retrieval_sp_sp_2}
+%         \caption{$S_C(\mathbf{z}_q^{\text{sp}}, \mathbf{z}_j^{\text{sp}})$}
+%         \label{fig:sp_sp_2}
+%     \end{subfigure}
+
+%     \caption{Spectral retrieval for random query galaxies in the validation set. The top 5 most similar spectra are shown for each query galaxy, pictured in each graph. This was done using image-image search for (\ref{fig:im_im_1}) (\ref{fig:im_im_2}), image-spectrum search for (\ref{fig:im_sp_1}) (\ref{fig:im_sp_2}), spectrum-image search for (\ref{fig:sp_im_1}) (\ref{fig:sp_im_2}) and spectrum-spectrum search for (\ref{fig:sp_sp_1}) (\ref{fig:sp_sp_2}).}
+%     \label{fig:spectral_retrieval}
+% \end{figure}
+
+
 \subsection{Zero Shot Prediction of Physical Properties}
-We present the results of the zero-shot prediction of redshift and stellar mass in Fig.\ref{fig:zeroshot}. These plots depict a scatterplot of the $k$-NN with 16 neighbours predictions against the ProvaBGS catalogue values for the validation set (grey points). A 2-D histogram ise also plotted with a heatmap help visualise the joint distribution of the two variables. Additionally, a Kerndel Density Estimate (KDE) plot is used to overlay cotnour lines (in black) that represent levels of density over the scatter plot. The coefficient of determination $R^2$ score is also calculated for each prediction, which is a measure on the proportion of variance that is explained by the model.
+We present the results of the zero-shot prediction of redshift and stellar mass in Fig.\ref{fig:zeroshot}. These plots depict a scatterplot of the $k$-NN redictions against the ProvaBGS catalogue values for the held-out set (grey points). A 2-D histogram is also plotted with a heatmap help to visualise the joint distribution of the two variables. Additionally, a Kernel Density Estimate (KDE) plot is used to overlay cotnour lines (in black) that represent levels of density over the scatter plot. The coefficient of determination $R^2$ score is also calculated for each prediction, which is a measure on the proportion of variance that is explained by the model. The $k$-NN regression is performed for both in-modality and cross-modality regression; for in-modality, we refer to case of using the same modality embeddings (image embeddings or spectrum embeddings) for both training and predicting the physical properties, while for cross-modality, we refer to the case of using spectrum embeddings for training and image embeddings for predicting. 
 
-The $k$-NN regression is performed for both in-modality and cross-modality regression; for in-modality, we refer to case of using the same modality embeddings (image embeddings or spectrum embeddings) for both trainign and predicting the physical properties, while for cross-modality, we refer to the case of using spectrum embeddings for training and image embeddings for predicting. 
+We can conclude that, similar to the original work, our embeddings give a strong zero-shot performance, indicating that the embedding space is able to organise itself around physically meaningful properties. The notably good performance even in the cross-modal case indicates that neighbours in the embedded space indeed share physically meaningful features regardless of the originating modality. Similar to the original work, the in-modality regression outperforms the cross-modality regression. This showcases that, although the constrastive loss aims to connect embeddings between modalities, this training objective causes the emergent property aiding in structuring the embeddings within respective modalities. Even though redshift was not an information explicitly used in the training, the spectrum-spectrum regression for redshift is able to capture a very high 0.87 of the variance in the data. This means that redshift has emerged as natural property to aid structure the embedding space.
 
-We can conclude that, similar to the original work, our embeddings give a strong zero-shot performance, indicating that the embedding space is able to organise itself around physically meaningful properties. The significanlty good performance even in the cross-modal case indicates that the neigbous in our embedded space indeed share physically meaningful features. Similar to the original work, the in-modality regression outperforms the cross-modality regression, which showcases that despite training under the objective of bringing the two modalities together, this causes the emergent property of sharing information across modalities, as it helps structure the embedding space within each modality. Even though redshift was not an information explicitly used in the training, the spectrum-spectrum regression for redshift is able to capture a very high 0.87 of the variance in the data. This means that redshift was used as a naturally emergent property which aided the spectrum encoder to structure the embedding space.
-
-Our reproduction results are consistent with the original work, but we note that we slightly underperform in all cases. This could be due to the smaller spectrum model used in our work. It could also be due to the model arhitecture itself, as the original work uses a transformer-based model which could capture a more nuanced representation of the spectra. Table \ref{tab:zeroshot} compares our results to the original work.
+Our reproduction results are consistent with the original work, but we note that we slightly underperform in all cases. This could be due to the smaller spectrum model used in our work. It could also be due to the model architecture itself, as the original work uses a transformer-based model which could capture a more nuanced representation of the spectra. Table \ref{tab:zeroshot} compares our results to the original work.
 
 
 % Please add the following required packages to your document preamble:
@@ -512,16 +625,14 @@ Our reproduction results are consistent with the original work, but we note that
         \label{fig:stellarmass_crossmodal}
     \end{subfigure}
 
-    \caption{Comparative visualizations of zero-shot redshift and stellar mass estimation across different embedding types.}
+    \caption{Zero-shot prediction of redshift (left column) and stellar mass (right column) for the held-out set using $k$-NN regression purely on the embeddings. The results are shown for in-modal prediction using image embeddings (top row), spectrum embeddings (middle row), and cross-modal prediction using spectrum embeddings for training and image embeddings for prediction (bottom row). On the $x$-axis we plot the PROVABGS catalogue values as ground truth, and on the $y$-axis we plot the $k$-NN predictions. A perfect prediction would lie on the diagonal line $ y = x $. The $R^2$ score is calculated for each prediction and is annotated in the top right corner of each plot.}
     \label{fig:zeroshot}
 \end{figure}
 
 
 
 \subsection{Embedding Space Clustering}
-As an extension to the original work, we visualise the embedding space and subsequently use clustering techniques to further examine how the model structures the data. 
-
-Fig.\ref{fig:umap_of_spectra} shows the UMAP projection of the spectrum embeddings, coloured by their catalogued redshift values $Z_{HP}$ on the left and stellar mass values $M_{\star}$ on the right. The projection reveals a clear structure, where low redshift galaxies are clustered in the lower left corner, rising to higher redshifts as we move to the upper right corner. The same pattern is present in the stellar mass plot. This again illustrates the emergent behaviour of the model to structure the embedding space around physically meaningful properties, despite not being explicitly trained on these properties. 
+As an extension to the original work, we visualise the embedding space and subsequently use clustering techniques to further examine how the model structures the data. Fig.\ref{fig:umap_of_spectra} shows the UMAP projection of the spectrum embeddings, coloured by their catalogued redshift values $Z_{HP}$ on the left and stellar mass values $M_{\star}$ on the right. The projection reveals a clear structure, where low redshift galaxies are clustered in the lower left corner, rising to higher redshifts as we move to the upper right corner. The same pattern is present in the stellar mass plot. This again illustrates the emergent behaviour of the model to structure the embedding space around physically meaningful properties, despite not being explicitly trained on these properties. 
 
 
 \begin{figure}[H]
@@ -531,7 +642,7 @@ Fig.\ref{fig:umap_of_spectra} shows the UMAP projection of the spectrum embeddin
       \end{minipage}},rotate=0,center}
       \includegraphics[width=1.15\textwidth]{../figures/umap_spectra_heatmap.png} % 1.3x text width to extend into the margins
     \end{adjustbox}
-    \caption{UMAP projection of the spectrum embeddings coloured by redshift $Z_{HP}$ (left) and stellar mass $M_{\star}$ (right). The projection reveals a clear structure for both projections, where low redshift and stellar mass galaxies are clustered in the lower left corner, rising to higher values as we move to the upper right corner.}
+    \caption{\textbf{Spectrum embeddings} UMAP projection coloured by redshift $Z_{HP}$ (left) and stellar mass $M_{\star}$ (right). The projection reveals a clear structure for both projections, where low redshift and stellar mass galaxies are clustered in the lower left corner, rising to higher values as we move to the upper right corner.}
     \label{fig:umap_of_spectra}
 \end{figure}
 
@@ -542,7 +653,7 @@ Fig.\ref{fig:umap_of_spectra} shows the UMAP projection of the spectrum embeddin
       \end{minipage}},rotate=0,center}
       \includegraphics[width=1.15\textwidth]{../figures/umap_image_heatmap.png} % 1.3x text width to extend into the margins
     \end{adjustbox}
-    \caption{UMAP projection of the image embeddings coloured by redshift $Z_{HP}$ (left) and stellar mass $M_{\star}$ (right). The projection reveals a clear structure for both projections, where low redshift and stellar mass galaxies are clustered in the lower left corner, rising to higher values as we move to the upper right corner.}
+    \caption{\textbf{Image embeddings} UMAP projection coloured by redshift $Z_{HP}$ (left) and stellar mass $M_{\star}$ (right). The projection reveals a clear structure for both projections, where low redshift and stellar mass galaxies are clustered in the lower left corner, rising to higher values as we move to the upper right corner.}
     \label{fig:umap_of_images}
 \end{figure}
 
@@ -554,7 +665,7 @@ Fig.\ref{fig:umap_of_spectra} shows the UMAP projection of the spectrum embeddin
       \end{minipage}},rotate=0,center}
       \includegraphics[width=1.15\textwidth]{../figures/umap_both_heatmap.png}
     \end{adjustbox}
-    \caption{UMAP projection of the image embeddings coloured by redshift $Z_{HP}$ (left) and stellar mass $M_{\star}$ (right). The projection reveals a clear structure for both projections, where low redshift and stellar mass galaxies are clustered in the lower left corner, rising to higher values as we move to the upper right corner.}
+    \caption{ \textbf{Combined image-spectrum embeddings} UMAP projection coloured by redshift $Z_{HP}$ (left) and stellar mass $M_{\star}$ (right). The projection reveals a clear structure for both projections, where high redshift and stellar mass galaxies are clustered in the lower left corner, falling to lower values as we move to the upper right corner.}
     \label{fig:umap_of_both}
 \end{figure}
 
@@ -574,9 +685,11 @@ Fig.\ref{fig:umap_of_images} and Fig.\ref{fig:umap_of_both} show the UMAP projec
 %     \label{fig:umap_DBSCAN}
 % \end{figure}
 
-To further examine this and other potential islands, we use DBScan to directly cluster the UMAP projection of the image embeddings. We set $\epsilon = 0.20$ and the minimum number of samples to 5. These were chosen by trial and error to produce a reasonable number of clusters in both the image and spectrum embeddings, with a reasonable number of galaxies in each. We then draw sample galaxies for each cluster to visually inspect. The clusters for the image embeddings are illustrated in Fig.\ref{fig:umap_DBSCAN}.
+To further examine this and other potential islands, we use DBSCAN to directly cluster the UMAP projection of the image embeddings. We set $\epsilon = 0.20$ and the minimum number of samples to 5. These were chosen by trial and error to produce a reasonable number of clusters in both the image and spectrum embeddings, with a reasonable number of galaxies in each. We then draw sample galaxies for each cluster to visually inspect. The clusters for the image embeddings are illustrated in Fig.\ref{fig:umap_DBSCAN}.
 
-We reveal that the image embedder has successfully separated galaxy images that contain artifacts such as [fix] into a distinct embedding island (Cluster 2). The galaxies contained in those images have variable redshifts and stellar masses, and are follow the same distribution as the main island. We further display 3 more islands. This is potentially a useful feature for quickly identifying artifacts in galaxy catalogues. Cluster 3 and 4 contain galaxies that largely fill the image, are mostly spiral and have high brightness. This indicates that model is able to separate galaxies based on their morphology, which is a key feature in galaxy classification. It is important to note that although we are looking at the image embeddings, these are informed by the spectrum embeddings, which means that it contains information about the galaxy's spectrum as well.
+The clustering reveals that the image embedder has successfully separated galaxy images that contain artifacts caused by the image capture process to a distinct embedding island (Cluster 2). The galaxies contained in those images have variable redshifts and stellar masses, and are follow the same distribution as the main island. This is potentially a useful feature for quickly identifying artifacts in galaxy catalogues. We further display 3 more islands: cluster 3 and 4 contain galaxies that largely fill the image, are mostly spiral and have high brightness. This indicates that model is able to separate galaxies based on their morphology, which is a key feature in galaxy classification. 
+
+It is important to note that although we visualise image embeddings in isolation, their structure is informed by the spectrum embeddings during training, which means that it contains information about the galaxy's spectrum as well. This also true for the spectrum embeddings, which are informed by the image embeddings. We make this statement more concrete by showcasing the results of $k$-Means clustering on the full dimensional space of just the spectrum embeddings. Here, we first perform the clustering and then project the clusters onto the UMAP projection of the spectrum embeddings. We choose to use 10 clusters, as they yield a reasonable silhouette score and a reasonable number of galaxies in each cluster. 
 
 
 \begin{figure}[H]
@@ -586,27 +699,25 @@ We reveal that the image embedder has successfully separated galaxy images that 
       \end{minipage}},rotate=0,center}
       \includegraphics[width=1.15\textwidth]{../figures/dbscan_image_clusters_shown.pdf}
     \end{adjustbox}
-    \caption{UMAP projection of the image embeddings coloured by the DBScan clustering.}
+    \caption{UMAP projection of the image embeddings coloured by the DBScan clustering. We show the images of samples of the largest island cluster (top left), and all the galaxy images contained in clusters 3, 4 and 5.}
     \label{fig:umap_DBSCAN}
 \end{figure}
 
 
-It is important to note that although we visualise the embeddings of one modality in isolation, their structuring is informed by the other modality during contrastive training. We illustrate this statement by showcasing the results of $k$-Means clustering on the full dimensional space of just the spectrum embeddings. Here, we first perform the clustering and then project the clusters onto the UMAP projection of the spectrum embeddings. We choose to use 10 clusters, as they yield a reasonable silhouette score and a reasonable number of galaxies in each cluster. 
+We then visualise a random sample of the spectra in each cluster, as shown in Fig.\ref{fig:annotated_spectra}. We observe that galaxies in the same cluster follow similar trends in their spectra, both in terms of the overall shape, the presense of specific spectral features and the flux range and scale. In addition to this we show that not only are the spectra in the same cluster similar, but the images of the galaxies are also visually similar, as shown in Fig.\ref{fig:annotated_images}. Recall that we are only considering the spectrum embeddings in this case, which means that the model has learned to structure the spectrum embeddings in a way that is informed by the image embeddings. This is a key feature of the AstroCLIP model, as it allows for the alignment of the two modalities in the shared latent space. Furthermore, it reveals a potential capability of the model to cluster the embeddings based on morphology, which is a key feature in galaxy classification. 
 
-We then visualise a random sample of the spectra in each cluster, as shown in Fig.\ref{fig:annotated_spectra}. We observe that galaxies in the same cluster follow similar trends in their spectra, both in terms of the overall shape, the presense of specific spectral features and the flux range and scale. In addition to this we show that not only are the spectra in the same cluster similar, but the images of the galaxies are also visually similar, as shown in Fig.\ref{fig:annotated_images}. Recall that we are only considering the spectrum embeddings in this case, which means that the model has learned to structure the spectrum embeddings in a way that is informed by the image embeddings. This is a key feature of the AstroCLIP model, as it allows for the alignment of the two modalities in the shared latent space.
-
-
-
+A noteworthy feature of this latest UMAP projection a distinct ring of galaxies on the main island that is permeating into different clusters. This could be an interesting feature to investigate further, as it could be indicative of a specific physical property that is not captured by the redshift or stellar mass.
 
 
 \begin{figure}[H]
     \centering
+    \vspace{-1cm}
     \begin{adjustbox}{addcode={
       \begin{minipage}{\width}}{
       \end{minipage}},rotate=0,center}
       \includegraphics[width=1.15\textwidth]{../figures/umap_spectrum_annotated_spectra.pdf}
     \end{adjustbox}
-    \caption{UMAP projection of the image embeddings coloured by the DBScan clustering.}
+    \caption{UMAP projection of the spectrum embeddings coloured by the $k$-Means clustering. The spectra of random samples from clusters [0,3,7,9] are shown in the four corners of this plot. The colours in the spectrum plots correspond to different galaxies within the specified spectrum (they are not related to the cluster colouring). All spectra follow similar trends in their shape within their respective clusters in terms of colour and shape.}
     \label{fig:annotated_spectra}
 \end{figure}
 
@@ -617,8 +728,10 @@ We then visualise a random sample of the spectra in each cluster, as shown in Fi
       \end{minipage}},rotate=0,center}
       \includegraphics[width=1.15\textwidth]{../figures/umap_spectrum_annotated_images.pdf}
     \end{adjustbox}
-    \caption{UMAP projection of the image embeddings coloured by the DBScan clustering.}
+    \caption{UMAP projection of the spectrum embeddings coloured by the $k$-Means clustering. The images of random samples from clusters [0,3,7,9] are shown in the four corners of this plot. The images are visually similar within their respective clusters.}
     \label{fig:annotated_images}
+
+    
 \end{figure}
 
 
