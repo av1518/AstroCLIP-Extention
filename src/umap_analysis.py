@@ -44,7 +44,7 @@ provabgs = provabgs[
     * (provabgs["MAG_Z"] > 0)
 ]
 
-
+print("PROVABGS table loaded and filtered, joined with embeddings")
 # set random seed
 np.random.seed(25101999)
 # randomise the order
