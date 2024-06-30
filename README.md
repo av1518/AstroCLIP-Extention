@@ -21,7 +21,22 @@ conda activate astroclip
 ```
 
 ## Script Contents
-All scripts have a description of their usage at the top. They are broken into the following sections:
+Here is quick description of each script and folder in `src/`:
+
+| Folder/File               | Description          |
+|---------------------------|----------------------|
+| `datasets_files/`            | Contains the scripts needed to download the datasets (prepared by the original work's authors)                     |
+| `downstream_notebooks/`      | Jypiter notebooks containing the downstream tasks and figures used in the report                     |
+| `run_outputs/`               | Contains the shell scripts used in training on HPC                     |
+| `downstream.py`             |   Downstream task script for query search, zero-shot predictions                   |
+| `loss.py`                   |  Contains the InfoNCE loss function for contrastive learning                    |
+| `models.py`                 | Contains classes for our pre-trained embedders and the unified AstroCLIP model                     |
+| `plot_training.py`          |  Plots the training                    |
+| `train_hpc.py`              |                      |
+| `train_local.py`            |                      |
+| `umap_DBSCAN.py`            |                      |
+| `umap_kmeans.py`            |                      |
+| `utils.py`                  |                      |
 
 
 
