@@ -1,4 +1,4 @@
-name: astroclip_3
+name: astroclip
 channels:
   - pytorch
   - huggingface
