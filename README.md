@@ -1,3 +1,9 @@
+# Data Analysis Project:
+# Reproduction and Extension of AstroCLIP: A Cross-Modal Foundation Model for Galaxies
+
+This is the repository for the MPhil Data Intensive Science data analysis project, where we reproduce and extend AstroCLIP: a pioneering model that can embed both galaxy images and spectra into a single, information-rich latent space. It includes all scripts for our reproduction and extension, instructions on how to get the data, and jypiter notebooks that contain all the code used in producing the plots for the report.
+
+We have dedicated `report` and `executive_summary` directories for these two documents.
 
 
 
@@ -84,3 +90,35 @@ sudo apt-get install -y nvidia-docker2
 After running the above commands, NVIDIA Container Toolkit should be availble for use.
 
 It is important to ensure there is sufficient storage before installing. For the same reason, we also advise that the dataset should be downloaded locally first, then mounted into the Docker container with appropriate storage settings instead of downloading it inside the container. For testing purposes, it's sufficient to only mount a subset of all data into the container.
+
+
+### Contributing
+
+Contributions are welcome. Please open an issue to discuss significant changes and update tests as appropriate.
+
+### License
+This project is open-sourced under the [MIT](https://choosealicense.com/licenses/mit/) License.
+
+
+### Co-Pilot declaration
+
+### Use of Co-pilot
+
+Co-pilot was utilized in the following ways:
+- Autocompleting documentation for functions and for scripts.
+- Understanding error messages with the `Explain this error` button next to the error message.
+- Responding to general queries, especially LaTeX.
+
+For example:
+
+**Prompt1:** How do I put two images together in a single figure, horizontally next to each other, with the same caption, in LaTeX?  
+**Answer1:** You can use the `subfigure` environment in LaTeX to put two images together in a single figure. Here is an example code snippet that puts two images next to each other with the same caption...
+
+**Prompt2:** How can I change a function name and have it change throughout my workspace?  
+**Answer2:** In Visual Studio Code, you can use the "Rename Symbol" feature to change a function name throughout your workspace. Here are the steps:
+1. Place your cursor on the function name you want to change.
+2. Right-click the function name, and select "Rename Symbol" from the context menu. Alternatively, you can use the shortcut F2.
+3. Enter the new function name and press Enter.
+
+VS Code will automatically find and update all occurrences of the function name in your workspace. This includes not only the function definition but also all places where the function is called.
+
