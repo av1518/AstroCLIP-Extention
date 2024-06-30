@@ -1,6 +1,4 @@
 
-## Figure Notebooks
-For ease of use, we provide jypiter notebooks that contain the figures used in the report in `src/downstream_notebooks`. 
 
 
 ## Environment Installation
@@ -26,17 +24,17 @@ Here is quick description of each script and folder in `src/`:
 | Folder/File               | Description          |
 |---------------------------|----------------------|
 | `datasets_files/`            | Contains the scripts needed to download the datasets (prepared by the original work's authors)                     |
-| `downstream_notebooks/`      | Jypiter notebooks containing the downstream tasks and figures used in the report                     |
+| `downstream_notebooks/`      | Jypiter notebooks containing the downstream tasks and figures used in the report (for ease of use)                     |
 | `run_outputs/`               | Contains the shell scripts used in training on HPC                     |
 | `downstream.py`             |   Downstream task script for query search, zero-shot predictions                   |
 | `loss.py`                   |  Contains the InfoNCE loss function for contrastive learning                    |
 | `models.py`                 | Contains classes for our pre-trained embedders and the unified AstroCLIP model                     |
-| `plot_training.py`          |  Plots the training                    |
-| `train_hpc.py`              |                      |
-| `train_local.py`            |                      |
-| `umap_DBSCAN.py`            |                      |
-| `umap_kmeans.py`            |                      |
-| `utils.py`                  |                      |
+| `plot_training.py`          |  Plots scripts for plotting the training loss, validation loss and learning rate during HPC training                    |
+| `train_hpc.py`              |   Script for training AstroCLIP on HPC cluster                   |
+| `train_local.py`            |   Script for training AstroCLIP locally (used for testing, needs ~ 20 hours on NVIDIA 16GB RTX3060 GPU)                   |
+| `umap_DBSCAN.py`            | Extension script: UMAP projection and DBSCAN clustering                     |
+| `umap_kmeans.py`            | Extension script: UMAP projection and KMeans clustering                     |
+| `utils.py`                  | Contains 2 utility functions borrowed from Stein et. al (2021) (as does the original work) to ensure proper reproducibility.                      |
 
 
 
