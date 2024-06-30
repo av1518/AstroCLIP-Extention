@@ -4,19 +4,14 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 import torch
 from datasets import load_dataset
 from pl_bolts.models.self_supervised import Moco_v2
-import torch.nn.functional as F
-import torch.optim.lr_scheduler as lr_scheduler
-from models import OutputExtractor, ExtendedSpender, AstroCLIP, AlternateSpender
+from models import OutputExtractor, AstroCLIP, AlternateSpender
 from torch.utils.data import Subset, DataLoader
 from torchvision.transforms import (
     Compose,
     RandomVerticalFlip,
     RandomHorizontalFlip,
     RandomRotation,
-    RandomErasing,
-    ToTensor,
     CenterCrop,
-    ToPILImage,
     InterpolationMode,
 )
 
