@@ -26,7 +26,7 @@ All scripts have a description of their usage at the top. They are broken into t
 
 
 ## Astroclip Checkpoints and Embeddings
-Some of our model checkpoints can be found in the `model_checkpoints` folder. The checkpoint used in obtaining the report figures is `model_checkpoints/epoch=49-[256, 128, 128, 128], lr=0.0005, hpc-alt-1.ckpt`. If you prefer to download our embeddings directly, we host them as HuggingFace Dataset in `.npz` format, which can be easily downloaded from https://huggingface.co/datasets/AVrikkis/astroclip_reproduction/tree/main. They are 12.3 GB in size.
+Some of our model checkpoints can be found in the `model_checkpoints` folder. The checkpoint used in obtaining the report figures is `model_checkpoints/epoch=49-[256, 128, 128, 128], lr=0.0005, hpc-alt-1.ckpt`. If you prefer to download our embeddings directly, we host them as HuggingFace Dataset in `.npz` format, which can be easily downloaded from https://huggingface.co/datasets/AVrikkis/astroclip_reproduction/tree/main. They are 12.3 GB in size. The scripts expect the embeddins to be blaced in `data/` directory.
 
 ## Data Access
 We authors of the original work provide the dataset as a HuggingFace dataset,  which can be accessed directly with the `src/dataset_files` in this directory. It can be downloaded onto the `data/` directory using:
