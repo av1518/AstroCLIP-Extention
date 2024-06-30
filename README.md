@@ -1,7 +1,7 @@
 # Data Analysis Project:
 # Reproduction and Extension of AstroCLIP: A Cross-Modal Foundation Model for Galaxies
 
-This is the repository for the MPhil Data Intensive Science data analysis project, where we reproduce and extend AstroCLIP: a pioneering model that can embed both galaxy images and spectra into a single, information-rich latent space. It includes all scripts for our reproduction and extension, instructions on how to get the data, and jypiter notebooks that contain all the code used in producing the plots for the report.
+This is the repository for the MPhil Data Intensive Science data analysis project, where we reproduce and extend AstroCLIP: a pioneering model that can embed both galaxy images and spectra into a single, information-rich latent space. It includes all scripts for our reproduction and extension, instructions on how to get the data, and Jupyter notebooks that contain all the code used in producing the plots for the report.
 
 We have dedicated `report` and `executive_summary` directories for these two documents.
 
@@ -30,7 +30,7 @@ Here is quick description of each script and folder in `src/`:
 | Folder/File               | Description          |
 |---------------------------|----------------------|
 | `datasets_files/`            | Contains the scripts needed to download the datasets (prepared by the original work's authors)                     |
-| `downstream_notebooks/`      | Jypiter notebooks containing the downstream tasks and figures used in the report (for ease of use)                     |
+| `downstream_notebooks/`      | Jupyter notebooks containing the downstream tasks and figures used in the report (for ease of use)                     |
 | `run_outputs/`               | Contains the shell scripts used in training on HPC                     |
 | `downstream.py`             |   Downstream task script for query search, zero-shot predictions                   |
 | `loss.py`                   |  Contains the InfoNCE loss function for contrastive learning                    |
