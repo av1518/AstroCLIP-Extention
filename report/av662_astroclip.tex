@@ -1,4 +1,4 @@
-\documentclass[draft, a4paper,12pt]{article}
+\documentclass[a4paper,12pt]{article}
 
 % List of packages and custom commands/environments
 \usepackage{amsmath,amssymb,amscd}
@@ -60,7 +60,7 @@
      
      {\Large  Andreas Vrikkis} \\ [6pt]
      {\large  December 14, 2023} \\ [3pt]
-     {\large  \LaTeX \hspace{0.03cm} Word count:  } \\ [3pt]
+     {\large  \LaTeX \hspace{0.03cm} Word count: 6105 } \\ [3pt]
      
      \end{center}   
     
@@ -92,16 +92,15 @@
 
 \section{Introduction}
 
+In recent years, the field of astronomy has witnessed a significant surge in the volume and complexity of datasets. Large-scale sky surveys, such as the Dark Energy Spectroscopic Instrument (DESI) \cite{DESI}, have generated catalogues encompassing tens of millions of objects, with future projects targeting the inclusion of billions. As the data volume expands, so does the complexity of the required analysis, necessitating sophisticated methods by researchers to extract meaningful insights. This has led to a growing interest in leveraging data-driven methodologies, particularly machine learning (ML), to aid in the analysis of these extensive astronomical datasets \cite{ivezic2020statistics}.
 
-The field of astronomy has seen a rapid increase in the volume and complexity of datasets in recent years. The advent of large-scale sky surveys such as the Dark Energy Spectroscopic Instrument (DESI) \cite{DESI} has resulted in catalogues already containing tens of millions of objects, with others aiming to reach billions in the near future. Nevertheless, as the volume of data increases, so does the complexity of the data analysis required by researchers to extract meaningful information. This has led to a growing interest in the development of data-driven methodologies from machine learning (ML) to aid in analysing the datasets of these surveys \cite{ivezic2020statistics}. 
+Despite the diverse range of computational approaches that have been developed, most machine learning (ML) models in astronomy are trained using a \textbf{supervised} learning framework. These models fundamentally depend on the quality and quantity of labelled training data to identify underlying patterns. However, in the field of astronomy, labelled data are often scarce and costly to obtain, often relying on crowd-sourced efforts \cite{willett2013galaxy}. Additionally, supervised models require retraining for each new task, starting with essentially random initialisation of network weights and parameters (random priors). This necessity poses a significant limitation, constraining the scalability and generalisation of these models to novel tasks.
 
-In spite of the wide array of computational approaches that have been developed, the majority of these ML models are trained under a \textbf{supervised} learning framework. These models instinsically rely on the quality and quantity of labelled training data to extract the underlying patterns in the data. However, in astronomy, labelled data are often scarce and expensive to obtain, often relying on crowd-sourced efforts \cite{willett2013galaxy}. Supervised models also need to be retrained for each new tasks, with essentially random initialisation of the network weights and parameters (random priors). This is a fundamental limitation that limits the scalability and generalisation of these models to new tasks.
+Recently, a new line of research has shifted towards self-supervised learning (SSL) as an alternative approach. These methods learn high-quality, rich \textbf{embeddings}: low-dimensional vector representations that capture semantically meaningful information of objects without the need for labeled training data. This is achieved by training models to perform surrogate tasks, such as identifying corrupted pairs or filling in masked sections of the input data. The extracted embeddings are versatile and can be utilised for various downstream tasks such as similarity searches, clustering, outlier removal. More importantly, they can be used as a `foundation' for further downstream tasks, hence they are often referred to as \textbf{foundation models}.  Approaches of this kind have already revolutionised ML fields, such as computer vision \cite{he2021maskedautoencodersscalablevision} and natural language processing \cite{radford2019language}, where they have demonstrated superior performance compared to their supervised counterparts in zero-shot and few-shot learning tasks.
 
-Recently, a new line of research has shifted towards self-supervised learning (SSL) as an alternative approach. These methods learn high-quality, rich embeddings; low-dimensional representations that capture semantically meaningful information of objects without the need for labeled training data. This is achieved by training models to perform surrogate tasks, such as identifying corrupted pairs or filling in masked sections of the input data. The extracted embeddings are versatile and can be utilised for various downstream tasks such as similarity searches, clustering, outlier removal. More importantly, they can be used as a `foundation' for further downstream tasks, hence they are often referred to as \textbf{foundation models}.  Approaches of this kind have already revolutionised related fields, such as computer vision \cite{he2021maskedautoencodersscalablevision} and natural language processing \cite{radford2019language}, where they have shown to outperform their supervised counterparts in zero-shot and few-shot learning tasks.
+Numerous SSL approaches have being deployed in the field of observational astronomy, with a notable example being the application of the Momentum Contrastive pretraining strategy (MoCo v2) to galaxy images \cite{stein}. However, these approaches have primarily been limited to embedding objects of a single modality, typically by creating augmented views of the same underlying object. Neverthelss, observational astronomy is inherently multimodal, as the same object can yield a variety of complementary observations. For instance, a galaxy can be observed through both images and spectra, each providing different data structures of the same underlying object. Since these modalities are correlated transformations of the same object, a common embedding space should exist where the representations of these modalities are aligned. Establishing such a universal foundation model for observational astronomy would enable cross-modal tasks such as searches, clustering, and inference
 
-Numerous SSL approaches being deployed in the field of observational astronomy, with a notable example being the application of Momentum Contrastive pretraining strategy (MoVo v2) to galaxy images \cite{stein}. To date, these approaches have been limited embedding objects of a single modality, typically by creating augmented views of the same undelying object. Observational astronomy, however, is inherently multimodal, with the same object yielding a number of complementary objervations. For instance, a galaxy can be observed in both images and spectra, each of which provides a different data structure of the same underlying object. As these modalities are correlated transformations of the same object, a common embedding space should exist where the representations of these modalities are aligned. This would form a universal foundation model for observational astronomy, allowing for cross-modal tasks such as searches, clustering and inference.
-
-In this work, we reproduce and extend AstroCLIP - a cross-modal foundation model for galaxies. Specifically, we aim to reproduce the results of version 1 of the AstroCLIP paper of Ref\cite{astroclip}, which we refer to as the `original work'. Our reproduction focuses on the following tasks:
+In this work, we reproduce and extend \emph{AstroCLIP} - the first cross-modal foundation model for galaxies. Specifically, we aim to reproduce the results of version 1 of the AstroCLIP paper of Ref\cite{astroclip}, which we refer to as the `original work'. Our reproduction focuses on the following tasks:
 %bullet points
 \begin{itemize}
     \item Deploy pre-trained single-modal models for galaxy images and spectra for the DESI Legacy Survey \cite{DESI}.
@@ -110,7 +109,7 @@ In this work, we reproduce and extend AstroCLIP - a cross-modal foundation model
 \end{itemize}
 We then extend the original work by further analysing the embedding space structure using clustering algorithms and dimensionality reduction techniques. In doing so, we empirically demonstrate that our cross-modal embeddings can capture semantically meaningful information about galaxies, which are aligned across the two modalities.
 
-ML research is currently experiencing a reproducibility crisis, with many studies difficult or even impossible to reproduce \cite{kapoor2023leakage}. Often, this is the case due to unpublished data or source-code, or due to subtle sensitivities in the training process that are not documented. Additionally, ML code tends to be complex and as of yet lacks the standardisation of other scientific fields. With the current increase in adopting the paradigm of predicting modeling using ML, it is more important than ever to embark onto reproducibility studies such as this one. We discuss the various challenges we faced during the reproduction process, and the steps we took to overcome them. %This report is structured as follows: in 
+Machine learning (ML) research is currently facing a reproducibility crisis, with many studies proving difficult or even impossible to replicate \cite{kapoor2023leakage}. This often arises due to unpublished data or source code, or due to subtle sensitivities in the training process that are not well-documented. Furthermore, ML code tends to be complex and lacks the standardisation seen in other scientific fields. As the paradigm of predictive modelling using ML gains traction, it is more crucial than ever to undertake reproducibility studies like this one. Here, we discuss the various challenges encountered during the reproduction process and the steps taken to overcome them.
 
 
 
@@ -344,8 +343,7 @@ We also perform clustering on the original 128-dimensional embeddings before app
 
 
 
-%---------------------------------------
-\newpage
+%--------------------------------------
 
 \section{Results}
 \label{sec:results}
@@ -416,7 +414,7 @@ Fig.\ref{fig:retrieval} showcases the three most similar galaxies (based on the 
 \end{figure}
 We further illustrate the search capabilities of this model by presenting the retrieved spectra for some of query galaxies for all combinations of modalities in Fig.\ref{fig:spectral_retrieval}. The 5 most similar spectra are shown for each query galaxy. The model is largely able to retrieve spectra similar to the query galaxy, in all modality pair combinations. This is both in terms of the overall shape of the spectrum and the presence of specific spectral features, such as particular spikes. This further demonstrates the model's ability to align the image and spectrum embeddings in the shared latent space.
 
-This search retrieval ability can be useful in a variety of applications, such as seach for rare or unusual objects (see some examples of this in Ref.\cite{stein}). The results are largely consistent with the original work, although a direct comparison is difficult as the images and spectra chosen for queries are random. It is worth noting that our results are achieved using a much smaller model the original work, yet still yields (visually) similar results.
+
 \begin{figure}[H]
     \centering
     % Add vertical space to extend into the top margin
@@ -491,6 +489,7 @@ This search retrieval ability can be useful in a variety of applications, such a
     \label{fig:spectral_retrieval}
 \end{figure}
 
+This search retrieval ability can be useful in a variety of applications, such as seach for rare or unusual objects (see some examples of this in Ref.\cite{stein}). The results are largely consistent with the original work, although a direct comparison is difficult as the images and spectra chosen for queries are random. It is worth noting that our results are achieved using a much smaller model the original work, yet still yields (visually) similar results.
 
 % \begin{figure}[H]
 %     \centering
@@ -749,15 +748,19 @@ A noteworthy feature of this latest UMAP projection a distinct ring of galaxies 
 
 
 \section{Conclusion}
-In this study, we successfully reproduced and extended the results of AstroCLIP—a cross-modal foundation model for galaxies that aligns image and spectrum embeddings in a shared latent space. First, we deployed two separate pre-trained single-modal encoders for galaxy images and spectra, which we modify to align the embeddings in a shared latent space. We then trained the cross-modal model under a InfoNCE constrastive loss to align the embeddings of the two modalities. Using the extracted embeddings, we demonstrated the model's ability to retrieve similar galaxies based on a query galaxy and predict physical properties such as redshift and stellar mass in a zero-shot regime. The latter is a key feature of the model, as it shows that the embeddings exhibit an emergent ability to structure themselves around physical properties, despite these not forming part of the training process.
+% In this study, we successfully reproduced and extended the results of AstroCLIP—a cross-modal foundation model for galaxies that aligns image and spectrum embeddings in a shared latent space. First, we deployed two separate pre-trained single-modal encoders for galaxy images and spectra, which we modify to align the embeddings in a shared latent space. We then trained the cross-modal model under a InfoNCE constrastive loss to align the embeddings of the two modalities. Using the extracted embeddings, we demonstrated the model's ability to retrieve similar galaxies based on a query galaxy and predict physical properties such as redshift and stellar mass in a zero-shot regime. The latter is a key feature of the model, as it shows that the embeddings exhibit an emergent ability to structure themselves around physical properties, despite these not forming part of the training process.
 
 
-Despite using a smaller model than the original work, we achieved comparable results in all tasks. In addition to reproducing the original results, we extended the analysis by examining the structure of the embedding space using clustering algorithms and dimensionality reduction techniques. We demonstrate that the embeddings form clusters that are semantically separable in both modalities, which presents a concrete example of the model's ability to align the embeddings based on shared semantics. 
+% Despite using a smaller model than the original work, we achieved comparable results in all tasks. In addition to reproducing the original results, we extended the analysis by examining the structure of the embedding space using clustering algorithms and dimensionality reduction techniques. We demonstrate that the embeddings form clusters that are semantically separable in both modalities, which presents a concrete example of the model's ability to align the embeddings based on shared semantics. 
 
 
-Our results confirm the potential of cross-modal contrastive pre-training to achieve high-quality foundation models for astronomical data. This work opens up the avenue for the addition of other modalities in the same embedding space, such as photometry, multi-band images, or even text data. Ultimately, this constitutes one of the first applications of foundational models in science, a promising advent in the wider field of machine learning.
+% Our results confirm the potential of cross-modal contrastive pre-training to achieve high-quality foundation models for astronomical data. This work opens up the avenue for the addition of other modalities in the same embedding space, such as photometry, multi-band images, or even text data. Ultimately, this constitutes one of the first applications of foundational models in science, a promising advent in the wider field of machine learning.
 
+In this study, we successfully reproduced and extended the results of AstroCLIP—a cross-modal foundation model for galaxies that aligns image and spectrum embeddings in a shared latent space. Initially, we deployed two separate pre-trained single-modal encoders for galaxy images and spectra, which we modified to align the embeddings in a shared latent space. We then trained the cross-modal model using an InfoNCE contrastive loss to align the embeddings of the two modalities. Utilising the extracted embeddings, we demonstrated the model's capability to retrieve similar galaxies based on a query galaxy and to predict physical properties such as redshift and stellar mass in a zero-shot regime. This ability is a key feature of the model, indicating that the embeddings naturally structure themselves around physical properties, despite these not being part of the training process.
 
+Despite employing a smaller model than the original work, we achieved comparable results in all tasks. Beyond reproducing the original results, we extended the analysis by examining the structure of the embedding space using clustering algorithms and dimensionality reduction techniques. We demonstrated that the embeddings form semantically separable clusters in both modalities, exemplifying the model's ability to align embeddings based on shared semantics.
+
+Our results confirm the potential of cross-modal contrastive pre-training to achieve high-quality foundation models for astronomical data. This work opens the avenue for integrating additional modalities into the same embedding space, such as photometry, multi-band images, or even text data. Ultimately, this constitutes one of the first applications of foundation models in science, marking a promising advancement in the broader field of machine learning in science.
 
 
 
