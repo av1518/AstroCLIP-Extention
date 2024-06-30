@@ -48,6 +48,7 @@
      \vspace*{0.75cm}
      
      {\LARGE \textbf{AstroCLIP: Cross-Modal Pre-training for Astronomical Foundation Models}} \\ [6pt]
+     \large{\textbf{Reproduction and Extension}} \\ [6pt]
      \large \textbf{Data Analysis Project} \\ [6pt]
      \vspace*{0.05cm}
      \hrulefill
@@ -545,8 +546,7 @@ Our reproduction results are consistent with the original work, but we note that
 
 
 \subsection{Embedding Space Clustering}
-In this section, we present the results of our extension. Figure \ref{fig
-} displays the UMAP projection of the spectrum embeddings, coloured by their catalogued redshift values ($Z_{HP}$) on the left and stellar mass values ($M_{\star}$) on the right. The projection reveals a clear structure: low redshift galaxies are clustered in the lower left corner, with higher redshifts appearing towards the upper right corner. The same pattern is evident in the stellar mass plot. This again demonstrates the emergent behaviour of the model in structuring the latent space around physically meaningful properties, despite not being explicitly trained on them.
+In this section, we present the results of our extension. Fig.\ref{fig:umap_of_spectra} displays the UMAP projection of the spectrum embeddings, coloured by their catalogued redshift values ($Z_{HP}$) on the left and stellar mass values ($M_{\star}$) on the right. The projection reveals a clear structure: low redshift galaxies are clustered in the lower left corner, with higher redshifts appearing towards the upper right corner. The same pattern is evident in the stellar mass plot. This again demonstrates the emergent behaviour of the model in structuring the latent space around physically meaningful properties, despite not being explicitly trained on them.
 
 
 \begin{figure}[H]
