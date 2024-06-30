@@ -1,4 +1,4 @@
-\documentclass[a4paper,12pt]{article}
+\documentclass[draft, a4paper,12pt]{article}
 
 % List of packages and custom commands/environments
 \usepackage{amsmath,amssymb,amscd}
@@ -70,10 +70,21 @@
     \restoregeometry
     
     \newpage
+    \begin{center}
+        \textbf{ABSTRACT}
+    \end{center}
+    We present a reproduction and extension of \emph{AstroCLIP}: a model that that facilitates the construction of both galaxy images and spectra into a shared, cross-modal embedding space. This is achieved by fine-tuning a pair of pre-trained single-modal models under a contrastive learning framework. Despite using a smaller spectrum encoder with 2 orders of magnitude fewer parameters than the original work, we achieve similar performance on a range of downstream tasks. We apply the model to extract embeddings from the Dark Energy SPectroscopic Instrument (DESI) images and from its corresponding Legacy Imaging Survey spectra. We demonstrate that the embedding space is effective at (1) accurate semantic similarity search for both in-modality and cross-modality query-retrieval tasks and (2) zero-shot prediction of redshift and stellar mass, achieving a Spearman's rank correlation coefficient $R^2$ of up to 0.87. We then extend the original work by projecting the embeddings space onto a 2D plane using UMAP, and use $k$-Means clustering to formulate clusters of galaxies that are semantically separable in both modalities. Ultimately, our approach demonstrates the ability of AstroCLIP to yield highly informative embeddings that have the emergent property of aligning themselves based on shared semantics and physical galaxy properties.
+
+
+
+    \newpage
     
     \tableofcontents
     
     \newpage
+
+
+
 
 
 %\abstract{The field of astronomy has seen a rapid increase in the volume and complexity of datasets in recent years. The advent of large-scale sky surveys such as the Dark Energy Spectroscopic Instrument (DESI) has resulted in catalogues already containing tens of millions of objects, with others aiming to reach billions in the near future. In this work, we reproduce and extend AstroCLIP - a cross-modal foundation model for galaxies. Specifically, we aim to reproduce the results of version 1 of the AstroCLIP paper of Ref, which we refer to as the `original work'. Our reproduction focuses on the following tasks: Deploy pre-trained single-modal models for galaxy images and spectra for the DESI Legacy Survey. Train a cross-modal model under a contrastive learning framework to align the embeddings of the two modalities in a shared latent space. Reproduce the original work's model performance on a range of downstream tasks, including query retrieval, zero-shot prediction of physical properties. We then extend the original work by further analysing the embedding space structure using clustering algorithms and dimensionality reduction techniques. In doing so, we empirically demonstrate that our cross-modal embeddings can capture semantically meaningful information about galaxies, which are aligned across the two modalities.}
