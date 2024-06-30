@@ -92,17 +92,16 @@ After running the above commands, NVIDIA Container Toolkit should be availble fo
 It is important to ensure there is sufficient storage before installing. For the same reason, we also advise that the dataset should be downloaded locally first, then mounted into the Docker container with appropriate storage settings instead of downloading it inside the container. For testing purposes, it's sufficient to only mount a subset of all data into the container.
 
 
-### Contributing
+## Contributing
 
 Contributions are welcome. Please open an issue to discuss significant changes and update tests as appropriate.
 
-### License
+## License
 This project is open-sourced under the [MIT](https://choosealicense.com/licenses/mit/) License.
 
 
-### Co-Pilot declaration
 
-### Use of Co-pilot
+## Use of Co-pilot
 
 Co-pilot was utilized in the following ways:
 - Autocompleting documentation for functions and for scripts.
