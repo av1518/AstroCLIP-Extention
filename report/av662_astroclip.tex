@@ -253,7 +253,7 @@ The pre-trained models are used as components of our unified AstroCLIP model. We
 
 \subsection{Downstream Tasks}
 \label{sec:downstream_tasks}
-To demonstrate the capabilities of AstroCLIP's embedding space, we evaluate its performance across a range of tasks for which it was neither explicitly trained nor fine-tuned. Firstly, we embed all galaxy images and spectra in the validation set (obtained as outlined in Section \ref{sec}) using our trained AstroCLIP model as follows:
+To demonstrate the capabilities of AstroCLIP's embedding space, we evaluate its performance across a range of tasks for which it was neither explicitly trained nor fine-tuned. Firstly, we embed all galaxy images and spectra in the validation set (obtained as outlined in Section \ref{sec:data}) using our trained AstroCLIP model as follows:
 
 \begin{equation}
     \text{Initial Modality Representation} : \left( \mathbf{x}, \mathbf{y} \right) \xmapsto{\text{AstroCLIP}} \text{Embeddings} : \left( \mathbf{z}^{\text{im}}, \mathbf{z}^{\text{sp}} \right) \in \mathbb{R}^{128}.
