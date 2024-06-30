@@ -3,7 +3,7 @@
 
 This is the repository for the MPhil Data Intensive Science data analysis project, where we reproduce and extend AstroCLIP: a pioneering model that can embed both galaxy images and spectra into a single, information-rich latent space. It includes all scripts for our reproduction and extension, instructions on how to get the data, and Jupyter notebooks that contain all the code used in producing the plots for the report.
 
-We have dedicated `report` and `executive_summary` directories for these two documents.
+We have separate `report/` and `executive_summary/` directories that contain these two documents.
 
 
 
