@@ -1,6 +1,5 @@
 data/*
 
-!data/*.csv
 
 __pycache__/*
 __pychache__
@@ -18,3 +17,4 @@ report/*
 
 executive_summary/*
 !executive_summary/executive_summary.pdf
+astroclip/*
