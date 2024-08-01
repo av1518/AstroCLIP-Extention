@@ -6,3 +6,7 @@ astroclip/*/checkpoints/*.ckpt filter=lfs diff=lfs merge=lfs -text
 src/downstream_notebooks/umap_DBSCAN.ipynb filter=lfs diff=lfs merge=lfs -text
 model_checkpoints/epoch=49-[256,[[:space:]]128,[[:space:]]128,[[:space:]]128],[[:space:]]lr=0.0005,[[:space:]]hpc-alt-1.ckpt filter=lfs diff=lfs merge=lfs -text
 model_checkpoints/hpc-15-05-epoch=49-step=15450.ckpt filter=lfs diff=lfs merge=lfs -text
+src/downstream_notebooks/umap_6_clusters.ipynb filter=lfs diff=lfs merge=lfs -text
+src/downstream_notebooks/umap_cluster.ipynb filter=lfs diff=lfs merge=lfs -text
+astroclip/l1mw2fdq/checkpoints/epoch=1-step=620.ckpt filter=lfs diff=lfs merge=lfs -text
+astroclip/u1zhtfay/checkpoints/epoch=1-step=31676.ckpt filter=lfs diff=lfs merge=lfs -text
