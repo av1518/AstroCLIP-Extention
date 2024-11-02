@@ -1,17 +1,17 @@
-# Data Analysis Project:
 # Reproduction and Extension of AstroCLIP: A Cross-Modal Foundation Model for Galaxies
 
-This is the repository for the MPhil Data Intensive Science data analysis project, where we reproduce and extend AstroCLIP: a pioneering model that can embed both galaxy images and spectra into a single, information-rich latent space. It includes all scripts for our reproduction and extension, instructions on how to get the data, and Jupyter notebooks that contain all the code used in producing the plots for the report.
+![alt text](figures/image.png)
 
-We have separate `report/` and `executive_summary/` directories that contain these two documents.
+This is the repository for the MPhil Data Intensive Science data analysis project, where we reproduce and extend AstroCLIP: a pioneering model that can embed both galaxy images and spectra into a single, information-rich latent space. This is achieved by fine-tuning a pair of pre-trained single-modal models under a contrastive learning framework. Ultimately, our approach demonstrates the ability of AstroCLIP to yield highly informative embeddings that have the emergent property of aligning themselves based on shared semantics and physical galaxy properties.
 
+You can see a full report in `report/` and an executive summary in `executive_summary/'.
 
 
 ## Environment Installation
 Because of OS-specific dependencies, we provide three different environment files: 
 - `win_env.yml` was used on a Windows OS for all downstream tasks and testing local training.
 - `hpc_env.yml` expects a linux OS, and was used for training the model on the HPC cluster.
-- `no_builds_env.yml` is not OS-dependent (this should be used on a MAC OS), but was found to lead into potential package dependecy issues.
+- `no_builds_env.yml` is not OS-dependent (this should be used on a MAC OS), but was found to lead into potential package dependency issues.
 
 To install the necessary Conda environment from these dependencies, run eg:
 ```bash
@@ -45,10 +45,10 @@ Here is quick description of each script and folder in `src/`:
 
 
 ## Astroclip Checkpoints and Embeddings
-Some of our model checkpoints can be found in the `model_checkpoints` folder. The checkpoint used in obtaining the report figures is `model_checkpoints/epoch=49-[256, 128, 128, 128], lr=0.0005, hpc-alt-1.ckpt`. If you prefer to download our embeddings directly, we host them as HuggingFace Dataset in `.npz` format, which can be easily downloaded from https://huggingface.co/datasets/AVrikkis/astroclip_reproduction/tree/main. They are 12.3 GB in size. The scripts expect the embeddins to be blaced in `data/` directory.
+Some of our model checkpoints can be found in the `model_checkpoints` folder. The checkpoint used in obtaining the report figures is `model_checkpoints/epoch=49-[256, 128, 128, 128], lr=0.0005, hpc-alt-1.ckpt`. If you prefer to download our embeddings directly, we host them as HuggingFace Dataset in `.npz` format, which can be easily downloaded from https://huggingface.co/datasets/AVrikkis/astroclip_reproduction/tree/main. They are 12.3 GB in size. The scripts expect the embeddings to be placed in `data/` directory.
 
 ## Data Access
-We authors of the original work provide the dataset as a HuggingFace dataset,  which can be accessed directly with the `src/dataset_files` in this directory. It can be downloaded onto the `data/` directory using:
+The authors of the original work provide the dataset as a HuggingFace dataset,  which can be accessed directly with the `src/dataset_files` in this directory. It can be downloaded onto the `data/` directory using:
 
 ```python
 from datasets import load_dataset
@@ -74,7 +74,7 @@ This would generate an image called `astroclip`. To deploy and run the container
 ```
 docker run --rm --gpus all -ti astroclip
 ```
-This would start the process inside the container. `--gpus` all tag is needed to enable GPU access inside the container, which is necessary for running of most scripts. To enable GPU access inside containers, NVIDIA Container Toolkit needs to be installed. On devices with GPU's, run the following commands to install NVIDIA Container Toolkit if it isn't already available:
+This would start the process inside the container. `--gpus` all tag is needed to enable GPU access inside the container, which is necessary for running most scripts. To enable GPU access inside containers, NVIDIA Container Toolkit needs to be installed. On devices with GPUs, run the following commands to install NVIDIA Container Toolkit if it isn't already available:
 
 1) Get the `.gpg` key set up:
 ```
@@ -87,7 +87,7 @@ distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
 sudo apt-get update
 sudo apt-get install -y nvidia-docker2
 ```
-After running the above commands, NVIDIA Container Toolkit should be availble for use.
+After running the above commands, NVIDIA Container Toolkit should be available for use.
 
 It is important to ensure there is sufficient storage before installing. For the same reason, we also advise that the dataset should be downloaded locally first, then mounted into the Docker container with appropriate storage settings instead of downloading it inside the container. For testing purposes, it's sufficient to only mount a subset of all data into the container.
 
@@ -99,25 +99,4 @@ Contributions are welcome. Please open an issue to discuss significant changes a
 ## License
 This project is open-sourced under the [MIT](https://choosealicense.com/licenses/mit/) License.
 
-
-
-## Use of Co-pilot
-
-Co-pilot was utilized in the following ways:
-- Autocompleting documentation for functions and for scripts.
-- Understanding error messages with the `Explain this error` button next to the error message.
-- Responding to general queries, especially LaTeX.
-
-For example:
-
-**Prompt1:** How do I put two images together in a single figure, horizontally next to each other, with the same caption, in LaTeX?  
-**Answer1:** You can use the `subfigure` environment in LaTeX to put two images together in a single figure. Here is an example code snippet that puts two images next to each other with the same caption...
-
-**Prompt2:** How can I change a function name and have it change throughout my workspace?  
-**Answer2:** In Visual Studio Code, you can use the "Rename Symbol" feature to change a function name throughout your workspace. Here are the steps:
-1. Place your cursor on the function name you want to change.
-2. Right-click the function name, and select "Rename Symbol" from the context menu. Alternatively, you can use the shortcut F2.
-3. Enter the new function name and press Enter.
-
-VS Code will automatically find and update all occurrences of the function name in your workspace. This includes not only the function definition but also all places where the function is called.
 
